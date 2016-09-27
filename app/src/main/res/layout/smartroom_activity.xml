@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fitsSystemWindows="true"
+    android:clipToPadding="true"
+    android:background="@color/bg_action">
+    <include
+        layout="@layout/toolbar"/>
+    <android.support.v4.view.ViewPager
+        android:background="@color/white"
+        android:id="@+id/vp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+    </android.support.v4.view.ViewPager>
+
+    <com.suntrans.smartshow.views.BottomMentTab
+        android:background="@color/bg_color"
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="75dip"
+        app:tabGravity="fill"
+        app:tabIndicatorHeight="0dp"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="@color/colorPrimary"
+        app:tabTextColor="#000">
+    </com.suntrans.smartshow.views.BottomMentTab>
+
+</LinearLayout>

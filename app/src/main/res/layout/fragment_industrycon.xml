@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<ImageView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:src="@drawable/diandongji"
+    android:layout_gravity="center"/>
+    <TextView
+        android:id="@+id/state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="电机状态：停止"
+        android:gravity="center"
+        android:textColor="@color/gray"
+        android:textSize="20sp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="30dp" />
+    <LinearLayout
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:onClick="onClickFan"
+            android:id="@+id/bt_fanzhuan"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@drawable/reverse"/>
+        <TextView
+            android:layout_width="30dp"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/bt_stop"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@drawable/stop"/>
+        <TextView
+            android:layout_width="30dp"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/bt_zhengzhuan"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@drawable/zhengzhuan"/>
+    </LinearLayout>
+    <RelativeLayout
+        android:id="@+id/fail"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <Button
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="连接失败点击重试"/>
+    </RelativeLayout>
+</LinearLayout>

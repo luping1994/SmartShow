@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dip"
+    android:orientation="horizontal"
+    android:id="@+id/layout"
+    android:background="@drawable/fg_layout_menu"
+    >
+
+    <ImageView
+        android:layout_width="28dip"
+        android:layout_height="28dip"
+        android:layout_gravity="center"
+        android:layout_marginLeft="15dip"
+        android:scaleType="fitCenter"
+        android:id="@+id/image"
+        android:src="@drawable/ic_detailinfo"/>
+    <LinearLayout
+        android:layout_width="0dip"
+        android:layout_weight="1"
+        android:layout_height="50dip"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50dip"
+            android:text="主页"
+            android:id="@+id/tx_name"
+            android:layout_marginLeft="15dip"
+            android:layout_marginTop="0dip"
+            android:textSize="19sp"
+            android:textColor="@color/white"
+            android:gravity="center|left"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="54dip"
+        android:layout_height="50dip"
+        android:gravity="center"
+        android:orientation="vertical">
+        <ImageView
+            android:layout_width="12dip"
+            android:layout_height="22dip"
+            android:layout_gravity="center"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_detail_white"/>
+    </LinearLayout>
+</LinearLayout>

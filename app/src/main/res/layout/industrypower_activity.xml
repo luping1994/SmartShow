@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fitsSystemWindows="true"
+    android:clipToPadding="true"
+    android:background="@color/bg_action">
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="50dip"
+        android:background="@color/bg_action"
+        android:orientation="horizontal"
+        android:gravity="center"
+        >
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="50dip"
+            android:orientation="horizontal"
+            android:id="@+id/layout_back"
+            android:background="@drawable/bg_back">
+            <ImageView
+                android:layout_width="20dip"
+                android:layout_height="35dip"
+                android:layout_gravity="center"
+                android:paddingRight="-8dip"
+                android:src="@drawable/ic_back_normal"
+                android:contentDescription="返回"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="50dip"
+                android:gravity="center"
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:layout_marginRight="8dip"
+                android:text="返回"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:id="@+id/tx_title"
+            android:text="工业用电"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="19sp"
+            android:layout_weight="1"/>
+        <LinearLayout
+            android:layout_width="50dip"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:id="@+id/layout_info">
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg_color"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:background="@color/bg_color"/>
+            <Button
+                android:elevation="3dp"
+                android:padding="16dp"
+                android:background="@drawable/bg_bt"
+                android:id="@+id/ll_con"
+                android:orientation="vertical"
+                android:text="三项电机控制"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </Button>
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:background="@color/bg_color"/>
+        <Button
+            android:elevation="3dp"
+            android:background="@drawable/bg_bt"
+            android:id="@+id/ll_state"
+            android:orientation="vertical"
+            android:text="三相开关状态"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </Button>
+
+</LinearLayout>
+</LinearLayout>

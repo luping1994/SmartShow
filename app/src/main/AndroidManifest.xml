@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.suntrans.smartshow">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:name=".base.BaseApplication">
+        <activity android:name=".activity.Main_Activity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!--四个表的activity-->
+        <activity android:name=".activity.Fourmeters_Activity"/>
+        <!--四个表具体参数的activity-->
+        <activity android:name=".activity.Meter_Activity"/>
+        <!--主服务-->
+        <service android:name=".service.MainService"/>
+        <!--工业用电主activity-->
+        <activity android:name=".activity.Industrypower_Activity"/>
+        <!--智能家居的activity-->
+        <activity android:name=".activity.Smartroom_Activity"/>
+        <activity android:name=".activity.Publicarea_Activity"/>
+        <activity android:name=".activity.Industry_Activity"/>
+        <activity android:name=".activity.IndustryState_Activity"/>
+        <activity android:name=".activity.RoadBulb_Activity"/>
+        <activity android:name=".activity.Flashlight_Activity"/>
+    </application>
+
+</manifest>

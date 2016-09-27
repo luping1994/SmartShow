@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="90dip"
+        android:layout_height="90dip"
+        android:orientation="vertical"
+        android:gravity="bottom|left">
+        <ImageView
+            android:id="@+id/iv"
+            android:layout_width="75dip"
+            android:layout_height="75dip"
+            android:src="@drawable/bulb1"
+            android:scaleType="centerCrop"/>
+    </LinearLayout>
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="90dip"
+        android:layout_height="40dip"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="插座"
+        />
+</LinearLayout>

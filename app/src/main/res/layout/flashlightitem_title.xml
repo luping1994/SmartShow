@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:id="@+id/layout"
+    >
+    <TextView
+        android:background="@color/bg_color"
+        android:layout_width="match_parent"
+        android:layout_height="45dip"
+        android:text="用户控制:"
+        android:id="@+id/name"
+        android:layout_marginLeft="10dip"
+        android:textSize="17sp"
+        android:textColor="@color/gray"
+        android:gravity="center|left"/>
+</LinearLayout>

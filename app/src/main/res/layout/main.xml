@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.suntrans.smartshow.activity.Main_Activity"
+    android:layout_width="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/colorPrimary"
+    android:layout_height="match_parent">
+    <com.suntrans.smartshow.views.MySlidingMenu
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/slidingmenu"
+        android:fitsSystemWindows="true"
+        >
+        <include
+            android:id="@+id/menu"
+            layout="@layout/main_menu"
+            />
+        <include
+            android:id="@+id/content"
+            layout="@layout/main_content"
+            />
+    </com.suntrans.smartshow.views.MySlidingMenu>
+</LinearLayout>
+
+
