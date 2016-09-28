@@ -1,8 +1,6 @@
 package com.suntrans.smartshow.activity;
 
 import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -19,12 +17,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.base.BaseActivity;
-import com.suntrans.smartshow.base.BaseApplication;
-import com.suntrans.smartshow.service.MainService;
+import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.RxBus;
 
 import java.util.ArrayList;
@@ -41,7 +37,7 @@ import rx.Subscription;
  */
 public class IndustryState_Activity extends BaseActivity {
 
-    public MainService.ibinder binder;  //用于Activity与Service通信
+    public MainService1.ibinder binder;  //用于Activity与Service通信
     private LinearLayout layout_back;    //返回键
     private TextView tx_title;   //标题
     private SwipeRefreshLayout refreshLayout;   //下拉刷新控件
@@ -55,7 +51,7 @@ public class IndustryState_Activity extends BaseActivity {
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            binder=(MainService.ibinder)service;
+            binder=(MainService1.ibinder)service;
         }
 
         @Override

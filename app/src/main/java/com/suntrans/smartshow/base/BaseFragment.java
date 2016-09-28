@@ -2,17 +2,13 @@ package com.suntrans.smartshow.base;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.suntrans.smartshow.utils.RxBus;
-import com.trello.rxlifecycle.components.support.RxFragment;
 
-import rx.Subscriber;
-
-
-public abstract class BaseFragment extends RxFragment
+public abstract class BaseFragment extends Fragment
 {
 
     public View rootView;
@@ -21,21 +17,7 @@ public abstract class BaseFragment extends RxFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
     {
-        RxBus.getInstance().toObserverable(byte[].class).subscribe(new Subscriber<byte[]>() {
-            @Override
-            public void onCompleted() {
-            }
 
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(byte[] bytes) {
-                parseObtainedMsg(bytes);
-            }
-        });
         rootView = inflater.inflate(getLayoutId(), container, false);
 
         return rootView;

@@ -25,6 +25,7 @@ import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.FlashLightAdapter;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.base.BaseActivity;
+import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.bean.FlashlightInfo;
 import com.suntrans.smartshow.fragment.PowerInfoFragment;
 import com.suntrans.smartshow.fragment.RoomConditionFragment;
@@ -35,7 +36,7 @@ import static com.suntrans.smartshow.R.id.recyclerView;
 /**
  * Created by Looney on 2016/9/26.
  */
-public class Smartroom_Activity extends BaseActivity {
+public class Smartroom_Activity extends BaseActivity1 {
 
     private TextView textView;//标题
     private Toolbar toolbar;//标题栏

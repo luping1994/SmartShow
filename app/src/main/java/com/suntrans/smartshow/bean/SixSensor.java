@@ -282,6 +282,17 @@ public class SixSensor extends Device {
     public void setSwitch_person(String switch_person) {
         this.switch_person = switch_person;
     }
+
+
+    public void convert(SixSensor sixSensor){
+        this.setArofene(sixSensor.getArofene());
+        this.setAtm(sixSensor.getAtm());
+        this.setHumidity(sixSensor.getHumidity());
+        this.setLight(sixSensor.getLight());
+        this.setPm1(sixSensor.getPm1());
+        this.setPm10(sixSensor.getPm10());
+        this.setPm25(sixSensor.getPm25());
+    }
 }
 
 

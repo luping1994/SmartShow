@@ -14,8 +14,8 @@
             android:id="@+id/iv"
             android:layout_width="75dip"
             android:layout_height="75dip"
-            android:src="@drawable/bulb1"
-            android:scaleType="centerCrop"/>
+            android:src="@drawable/ic_bulb_off"
+            android:scaleType="fitXY"/>
     </LinearLayout>
     <TextView
         android:id="@+id/name"

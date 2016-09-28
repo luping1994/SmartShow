@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -24,8 +25,7 @@
         <!--四个表具体参数的activity-->
         <activity android:name=".activity.Meter_Activity"/>
         <!--主服务-->
-        <service android:name=".service.MainService"/>
-        <!--工业用电主activity-->
+        <service android:name=".service.MainService1"/>
         <activity android:name=".activity.Industrypower_Activity"/>
         <!--智能家居的activity-->
         <activity android:name=".activity.Smartroom_Activity"/>

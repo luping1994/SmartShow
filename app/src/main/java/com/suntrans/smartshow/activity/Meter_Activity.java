@@ -10,7 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,23 +26,14 @@ import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.base.BaseActivity1;
-import com.suntrans.smartshow.service.MainService;
+import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
-import com.suntrans.smartshow.utils.RxBus;
-import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-
-import static android.view.View.X;
 
 
 /**
@@ -61,14 +51,13 @@ public class Meter_Activity extends BaseActivity1 {
     private ArrayList<Map<String, String>> data = new ArrayList<>();
     private mAdapter adapter;
     private static String  date;//日期
-    public MainService.ibinder binder;  //用于Activity与Service通信
-
+    public MainService1.ibinder binder;  //用于Activity与Service通信
     private ServiceConnection con = new ServiceConnection() {
         //绑定服务成功后，调用此方法，获取返回的IBinder对象，可以用来调用Service中的方法
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LogUtil.i("绑定成功");
-            binder=(MainService.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
+            binder=(MainService1.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
 //            binder.sendOrder(addr+"f003 000e",4);
             //    Log.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
         }
@@ -81,7 +70,7 @@ public class Meter_Activity extends BaseActivity1 {
     };   ///用于绑定activity与service
     @Override
     public void initViews(Bundle savedInstanceState) {
-        Intent intent1 = new Intent(getApplicationContext(), MainService.class);    //指定要绑定的service
+        Intent intent1 = new Intent(getApplicationContext(), MainService1.class);    //指定要绑定的service
         bindService(intent1, con, Context.BIND_AUTO_CREATE);   //绑定主service
 
         // 注册自定义动态广播消息。根据Action识别广播

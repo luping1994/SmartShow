@@ -1,31 +1,17 @@
 package com.suntrans.smartshow.base;
 
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.Message;
-import android.widget.Toast;
+import android.support.v7.app.AppCompatActivity;
 
 
-import com.suntrans.smartshow.service.MainService;
-import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
-import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
  * Created by Looney on 2016/8/9.
  */
-public abstract  class BaseActivity1 extends RxAppCompatActivity {
+public abstract  class BaseActivity1 extends AppCompatActivity {
  ///用于绑定activity与service
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -42,14 +28,12 @@ public abstract  class BaseActivity1 extends RxAppCompatActivity {
 
     @Override
     protected void onStart() {
-
         initData();
         super.onStart();
     }
 
     @Override
     protected void onPause() {
-        LogUtil.i("解除绑定成功");
         super.onPause();
     }
 

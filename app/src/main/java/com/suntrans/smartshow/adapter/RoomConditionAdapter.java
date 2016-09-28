@@ -1,7 +1,9 @@
 package com.suntrans.smartshow.adapter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,17 +23,21 @@ import com.suntrans.smartshow.views.Switch;
 public class RoomConditionAdapter extends RecyclerView.Adapter {
     private Context context;
     private SixSensor data;
+    private int Pwidth=0;  //屏幕宽度，单位是pixel
+    private DisplayMetrics displayMetrics = new DisplayMetrics();
 
-    public RoomConditionAdapter(Context context, SixSensor data) {
+    public RoomConditionAdapter(Activity context, SixSensor data) {
         this.context = context;
         this.data = data;
+        context.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);//获取屏幕大小的信息
+        Pwidth=displayMetrics.widthPixels;   //屏幕宽度,先锋的宽度是800px，小米2a的宽度是720px
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == 1) {
             RecyclerView.ViewHolder holder = new viewHolder1(LayoutInflater.from(context)
-                    .inflate(R.layout.roomcondition_item1, parent, false));
+                    .inflate(R.layout.roomcondition_item2, parent, false));
             return holder;
         }else if (viewType==0){
 
@@ -84,80 +90,102 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
     class viewHolder1 extends RecyclerView.ViewHolder {
 
         ImageView image;    //图标
+        ImageView person;    //图标
         TextView name;    //名称
         TextView value;    //参数值
+        TextView evaluate;  //标准
+        LinearLayout layout_arrow;  //游标的布局
+        LinearLayout layout_per;  //游标的布局
 
         public viewHolder1(View view) {
             super(view);
-            image = (ImageView) view.findViewById(R.id.image);
+            image = (ImageView) view.findViewById(R.id.standard);
             name = (TextView) view.findViewById(R.id.name);
             value = (TextView) view.findViewById(R.id.value);
+            evaluate = (TextView) view.findViewById(R.id.evaluate);
+            layout_arrow = (LinearLayout) view.findViewById(R.id.layout_arrow);
+            person = (ImageView) view.findViewById(R.id.img_person);
+            layout_per = (LinearLayout) view.findViewById(R.id.layout_person);
         }
 
         public void setData(int position) {
             switch (position) {
                 case 2:
-                    image.setImageResource(R.mipmap.ic_pm);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.bg_standard);
                     name.setText("PM1");
                     value.setText(data==null?"null":data.getPm1()+"");
                     break;
                 case 3:
-                    image.setImageResource(R.mipmap.ic_pm);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.bg_standard);
                     name.setText("PM10");
                     value.setText(data==null?"null":data.getPm10()+"");
                     break;
                 case 4:
-                    image.setImageResource(R.mipmap.ic_pm);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.bg_standard);
                     name.setText("PM2.5");
                     value.setText(data==null?"null":data.getPm25()+"");
                     break;
                 case 5:
-                    image.setImageResource(R.drawable.ic_power);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.standard_smoke);
                     name.setText("甲醛");
                     value.setText(data==null?"null":data.getArofene()+"");
                     break;
                 case 6:
-                    image.setImageResource(R.mipmap.ic_smoke);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.standard_smoke);
                     name.setText("烟雾");
                     value.setText(data==null?"null":data.getSmoke()+"");
                     break;
                 case 8:
-                    image.setImageResource(R.mipmap.ic_temp);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.standard_tem);
                     name.setText("温度");
                     value.setText(data==null?"null":data.getTmp()+"");
                     break;
                 case 9:
-                    image.setImageResource(R.mipmap.ic_humidity);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.standard_humidity);
                     name.setText("湿度");
                     value.setText(data==null?"null":data.getHumidity()+"");
                     break;
                 case 10:
-                    image.setImageResource(R.mipmap.ic_atm);
+                    image.setImageResource(R.drawable.standard_humidity);
                     name.setText("气压");
+                    layout_per.setVisibility(View.GONE);
                     value.setText(data==null?"null":data.getAtm()+"");
                     break;
                 case 11:
-                    image.setImageResource(R.mipmap.ic_lightintensity);
+                    layout_per.setVisibility(View.GONE);
+                    image.setImageResource(R.drawable.standard_light);
                     name.setText("光线强度");
                     value.setText(data==null?"null":data.getLight()+"");
                     break;
                 case 12:
-                    image.setImageResource(R.mipmap.ic_peopleinfo);
+                    layout_per.setVisibility(View.GONE);
+                    layout_per.setVisibility(View.VISIBLE);
+                    person.setImageResource(R.drawable.person0);
                     name.setText("人员信息");
-                    value.setText(data==null?"null":data.getStaff()+"");
+                    value.setText(data.getStaff()==0.0?"没人":"有人");
                     break;
                 case 14:
-                    image.setImageResource(R.mipmap.ic_gradient);
+                    layout_per.setVisibility(View.GONE);
+//                    image.setImageResource(R.mipmap.ic_gradient);
                     name.setText("X轴倾斜角");
                     value.setText(data==null?"null":data.getXdegree()+"");
                     break;
                 case 15:
-                    image.setImageResource(R.mipmap.ic_gradient);
+                    layout_per.setVisibility(View.GONE);
+//                    image.setImageResource(R.mipmap.ic_gradient);
                     name.setText("Y轴倾斜角");
                     value.setText(data==null?"null":data.getYdegree()+"");
                     break;
                 case 16:
-                    image.setImageResource(R.mipmap.ic_gradient);
+                    layout_per.setVisibility(View.GONE);
+//                    image.setImageResource(R.mipmap.ic_gradient);
                     name.setText("Z轴倾斜角");
                     value.setText(data==null?"null":data.getZdegree()+"");
                     break;

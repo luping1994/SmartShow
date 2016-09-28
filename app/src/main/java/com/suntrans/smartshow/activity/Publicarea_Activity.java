@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.service.carrier.CarrierService;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -16,21 +15,18 @@ import android.widget.TextView;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.base.BaseActivity;
-import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.utils.UiUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.R.attr.data;
-
 /**
  * Created by pc on 2016/9/15.
  * 公共区域管理页面
  */
-public class Publicarea_Activity extends BaseActivity {
+public class Publicarea_Activity extends BaseActivity1 {
     private LinearLayout layout_back;   //返回键
     private RecyclerView recyclerView;    //列表控件
     private ArrayList<Map<String, String>> data = new ArrayList<>();

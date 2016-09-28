@@ -15,8 +15,6 @@ import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.bean.SmartSwitch;
 import com.suntrans.smartshow.utils.UiUtils;
 
-import static android.R.attr.id;
-
 /**
  * Created by Looney on 2016/9/26.
  */
@@ -32,7 +30,7 @@ public class SmartControlAdapter extends RecyclerView.Adapter {
         this.context = context;
         this.data = data;
     }
-
+    private onItemClickListener onItemClickListener;
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         RecyclerView.ViewHolder holder = new viewHolder1(LayoutInflater.from(context)
@@ -40,12 +38,23 @@ public class SmartControlAdapter extends RecyclerView.Adapter {
         return holder;
     }
 
-        @Override
-        public void onBindViewHolder (RecyclerView.ViewHolder holder,int position){
+    public void setOnItemClickListener(SmartControlAdapter.onItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
+    @Override
+        public void onBindViewHolder (final RecyclerView.ViewHolder holder, final int position){
 
             Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),imageId[position]);
             bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
             ((viewHolder1)holder).image.setImageBitmap(bitmap);
+            ((viewHolder1)holder).image.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onItemClickListener.onclick(v,holder.getAdapterPosition());
+                }
+            });
+
             ((viewHolder1)holder).textView.setText(names[position]);
         }
 
@@ -75,6 +84,9 @@ public class SmartControlAdapter extends RecyclerView.Adapter {
         }
     }
 
+    public interface onItemClickListener{
+        void onclick(View v, int position);
+    }
 
 }
 

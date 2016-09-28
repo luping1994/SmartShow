@@ -25,6 +25,7 @@ import android.widget.TextView;
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.base.BaseActivity;
+import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.utils.RxBus;
 import com.suntrans.smartshow.views.MySlidingMenu;
 
@@ -38,7 +39,7 @@ import static com.suntrans.smartshow.R.drawable.control;
 /**
  * 主页面
  */
-public class Main_Activity extends BaseActivity {
+public class Main_Activity extends BaseActivity1 {
     private MySlidingMenu slidingMenu;   //侧滑菜单控件
     private View main_menu;    //左边菜单栏
     private View main_content;    //右边主页面
