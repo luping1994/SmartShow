@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -27,6 +28,7 @@ import android.widget.TextView;
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.RoadBulbAdapter;
+import com.suntrans.smartshow.fragment.RoomConditionFragment;
 import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
@@ -146,8 +148,11 @@ public class RoadBulb_Activity extends AppCompatActivity{
             @Override
             public void run() {
                 refreshLayout.setRefreshing(true);
+                getSwitchState();
             }
         });
+        recyclerView.setAdapter(adapter);
+
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -162,14 +167,13 @@ public class RoadBulb_Activity extends AppCompatActivity{
                         getSwitchState();
                     }
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(8000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
         });
-        recyclerView.setAdapter(adapter);
     }
     Handler handler = new Handler(){
         @Override
@@ -232,8 +236,8 @@ public class RoadBulb_Activity extends AppCompatActivity{
             s=Converts.Bytes2HexString(bytes);
             s= s.split("0d0a")[0]+"0d0a";
             if (s.length()>20){
-                return_addr = s.substring(4,12);   //返回数据的开关地址
                 s=s.substring(2,s.length());
+                return_addr = s.substring(4,12);   //返回数据的开关地址
                 System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:"+s);
                 byte a[] = Converts.HexString2Bytes(s);
                 if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
@@ -287,9 +291,10 @@ public class RoadBulb_Activity extends AppCompatActivity{
                 }
                 if (adapter!=null){
                     for (int i =0;i<datas.size();i++){
-                        System.out.println(datas.get(i).get("position")+datas.get(i).get("state"));
+//                        System.out.println(datas.get(i).get("position")+datas.get(i).get("state"));
                     }
                     refreshLayout.setRefreshing(false);
+                    UiUtils.showToast(UiUtils.getContext(),"刷新成功！");
                     adapter.notifyDataSetChanged();
                 }
             }

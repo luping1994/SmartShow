@@ -5,6 +5,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.Convert.ParseSixSensor;
@@ -16,6 +17,7 @@ import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.base.BaseFragment;
 import com.suntrans.smartshow.bean.SixSensor;
 import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
 import com.suntrans.smartshow.views.Switch;
 
@@ -36,11 +38,11 @@ public class RoomConditionFragment extends BaseFragment {
     private Socket client;//连接
     private DataOutputStream out;
     private DataInputStream in;
-    private String ipAddress;
-    int port=8000;
+    private String ipAddress;//ip地址
+    int port=8000;//端口号
+    String addr ="0001";
     private static boolean isRuning=true;
     private static boolean isRefresh = true;//是否刷新
-    String addr = "0001";
     @Override
     public int getLayoutId() {
         return R.layout.roomcondition_fragment;
@@ -98,9 +100,7 @@ public class RoomConditionFragment extends BaseFragment {
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
-                refreshLayout.setRefreshing(true);
-                String order="ab68"+addr+"f003 0100 0011";
-                sendOrder(order);
+                getAllParameter();
             }
         });
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -108,12 +108,15 @@ public class RoomConditionFragment extends BaseFragment {
             public void onRefresh() {
                 String order="ab68"+addr+"f003 0100 0011";
                 sendOrder(order);
-//                handler.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        sendOrder("ab68"+addr+"f003 0200 0006");
-//                    }
-//                },500);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                            UiUtils.showToast(UiUtils.getContext(),"刷新失败，请重试！");
+                        }
+                    }
+                },2000);
             }
         });
     }
@@ -123,7 +126,6 @@ public class RoomConditionFragment extends BaseFragment {
      * @param order
      */
     private void sendOrder(final String order) {
-
         if (client!=null)
             if (!client.isOutputShutdown()){
                 new Thread(){
@@ -133,12 +135,21 @@ public class RoomConditionFragment extends BaseFragment {
                         byte[] bt=null;
                         bt =Converts.HexString2Bytes(order1);
                         String  string =  order1+Converts.GetCRC(bt, 4, bt.length)+"0d0a";
-                        System.out.println("Fuckkkkkkkkkkkkkkk===>"+string);/////////////////////
                         byte[] bt1 = Converts.HexString2Bytes(string);
                         try {
                             out.write(bt1);
                             out.flush();
+                            LogUtil.i("命令已发送==>"+string);/////////////////////
                         } catch (IOException e) {
+                            //尝试重新建立连接
+                            try {
+                                client = new Socket(ipAddress,port);
+                                in = new DataInputStream(client.getInputStream());
+                                out= new DataOutputStream(client.getOutputStream());
+                                sendOrder(order);
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
                             e.printStackTrace();
                         }
                     }
@@ -153,18 +164,27 @@ public class RoomConditionFragment extends BaseFragment {
      */
     private void connectToServer() {
         ipAddress = BaseApplication.getSharedPreferences().getString("ipAddress","192.168.1.235");
+        LogUtil.i("ipAddress=====>"+ipAddress);
         new Thread(){
             @Override
             public void run() {
                 if (client==null){
                     try {
                         client = new Socket(ipAddress,port);
+                        out  = new DataOutputStream(client.getOutputStream());
+                        in = new DataInputStream(client.getInputStream());
                         LogUtil.i("client=========>>连接成功！");
-                        new TcpServerThread().start();
                     } catch (IOException e) {
+                        UiUtils.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                UiUtils.showToast(UiUtils.getContext(),"连接服务器失败");
+                            }
+                        });
                         e.printStackTrace();
                     }
                 }
+                new TcpServerThread().start();
             }
         }.start();
     }
@@ -173,13 +193,12 @@ public class RoomConditionFragment extends BaseFragment {
      * 收消息进程
      */
     class TcpServerThread extends Thread{
-        @Override
         public void run() {
+            LogUtil.i("正在准备收消息中...");
             try {
                 byte[] buf = new byte[100];
                 int len = 0;
-                out  = new DataOutputStream(client.getOutputStream());
-                in = new DataInputStream(client.getInputStream());
+
                 while (client!=null){
                     if (!client.isClosed()) {
                         if (client.isConnected()) {
@@ -195,9 +214,8 @@ public class RoomConditionFragment extends BaseFragment {
                                     s = s.replace(" ", ""); //去掉空格
                                     String[] single_str = s.split("0d0a");
                                     String result = single_str[0] + "0d0a";
-                                    System.out.println("Fuck you!收到结果为==>" + result);
+                                    LogUtil.i("Fuck you!收到结果为==>" + result);
                                     SixSensor parseData = ParseSixSensor.parseData(result);
-//                            System.out.println(parseData.getTmp()+"ssssssssssssssssssssss");
                                     data.setPm1(parseData.getPm1());
                                     data.setPm10(parseData.getPm10());
                                     data.setPm25(parseData.getPm25());
@@ -265,5 +283,14 @@ public class RoomConditionFragment extends BaseFragment {
     protected void parseObtainedMsg(byte[] bytes) {
         LogUtil.e("RoomConditionFragment收到拉="+bytes.toString());
     }
-
+    public void  getAllParameter(){
+        String order="ab68"+addr+"f003 0100 0011";
+        sendOrder(order);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendOrder("ab68"+addr+"f003 0200 0006");
+                    }
+                },500);
+    }
 }

@@ -13,11 +13,11 @@
         android:src="@drawable/shanqideng"
         />
     <TextView
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="60dp"
         android:id="@+id/tv"
         android:gravity="center"
         android:layout_width="80dip"
-        android:layout_height="30dip"
+        android:layout_height="20dip"
         android:textSize="15sp"
         android:text="疝气灯"
         android:textColor="@color/white"

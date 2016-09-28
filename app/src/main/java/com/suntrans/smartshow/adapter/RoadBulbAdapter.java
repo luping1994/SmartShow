@@ -27,7 +27,8 @@ public class RoadBulbAdapter extends  RecyclerView.Adapter <RoadBulbAdapter.MyVi
 
 //    private  SmartSwitch datas;
     private  Context context;
-    private  int[] imageId = {R.drawable.ic_bulb_off,R.drawable.ic_bulb_on};
+    private  int[] imageId = {R.drawable.ic_bulb_off,R.drawable.ic_bulb_on,
+                                R.drawable.ic_dot_off,R.drawable.ic_dot_on};
     private  OnItemClickListener mOnItemClickListener;
     private ArrayList<Map<String,String>> datas;
 
@@ -38,8 +39,15 @@ public class RoadBulbAdapter extends  RecyclerView.Adapter <RoadBulbAdapter.MyVi
     public interface OnItemClickListener {
         void onClick(View view, int position);
     }
-
+    Bitmap bitmap_off;
+    Bitmap bitmap_on;
+    Bitmap dot_off;
+    Bitmap dot_on;
     public RoadBulbAdapter(Context context, ArrayList<Map<String,String>> datas){
+         bitmap_off = BitmapFactory.decodeResource(context.getResources(),imageId[0]);
+         bitmap_on = BitmapFactory.decodeResource(context.getResources(),imageId[1]);
+         dot_off = BitmapFactory.decodeResource(context.getResources(),imageId[2]);
+         dot_on = BitmapFactory.decodeResource(context.getResources(),imageId[3]);
         this.datas=datas;
         this.context = context;
     }
@@ -68,17 +76,20 @@ public class RoadBulbAdapter extends  RecyclerView.Adapter <RoadBulbAdapter.MyVi
     }
     class  MyViewHolder extends RecyclerView.ViewHolder{
         ImageView imageView ;
+        ImageView dot ;
         TextView textView;
         public MyViewHolder(View itemView) {
             super(itemView);
             imageView = (ImageView) itemView.findViewById(R.id.iv);
             textView = (TextView) itemView.findViewById(R.id.name);
+            dot = (ImageView) itemView.findViewById(R.id.dot);
         }
         public void setData(int position){
-            Bitmap bitmap_off = BitmapFactory.decodeResource(context.getResources(),imageId[0]);
-            Bitmap bitmap_on = BitmapFactory.decodeResource(context.getResources(),imageId[1]);
+
             imageView.setImageBitmap(TextUtils.equals(datas.get(position).get("state"),"0")?bitmap_off:bitmap_on);
             textView.setText("路灯"+(position+1));
+            dot.setImageBitmap(TextUtils.equals(datas.get(position).get("state"),"0")?dot_off:dot_on);
+
         }
     }
 }

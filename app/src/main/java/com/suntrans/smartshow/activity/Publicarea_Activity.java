@@ -101,7 +101,7 @@ public class Publicarea_Activity extends BaseActivity1 {
             int id =Integer.valueOf(data.get(position).get("Image"));
 
             Bitmap bitmap = BitmapFactory.decodeResource(Publicarea_Activity.this.getResources(),id);
-            bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
+            bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(10));
 
             ((viewHolder1)holder).image.setImageBitmap(bitmap);
             ((viewHolder1)holder).textView.setText(data.get(position).get("Name"));
