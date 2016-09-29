@@ -8,9 +8,12 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -28,6 +31,7 @@ import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.StatusBarCompat;
 import com.suntrans.smartshow.utils.UiUtils;
 
 import java.text.SimpleDateFormat;
@@ -40,7 +44,7 @@ import java.util.Map;
  * Created by pc on 2016/9/16.
  * 四个表信息详细页面，通过传入不同的参数显示
  */
-public class Meter_Activity extends BaseActivity1 {
+public class Meter_Activity extends AppCompatActivity {
 
     private LinearLayout layout_back;    //返回键
     private TextView tx_title;   //标题
@@ -52,6 +56,7 @@ public class Meter_Activity extends BaseActivity1 {
     private mAdapter adapter;
     private static String  date;//日期
     public MainService1.ibinder binder;  //用于Activity与Service通信
+
     private ServiceConnection con = new ServiceConnection() {
         //绑定服务成功后，调用此方法，获取返回的IBinder对象，可以用来调用Service中的方法
         @Override
@@ -68,15 +73,26 @@ public class Meter_Activity extends BaseActivity1 {
 
         }
     };   ///用于绑定activity与service
+
     @Override
-    public void initViews(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         Intent intent1 = new Intent(getApplicationContext(), MainService1.class);    //指定要绑定的service
         bindService(intent1, con, Context.BIND_AUTO_CREATE);   //绑定主service
 
         // 注册自定义动态广播消息。根据Action识别广播
         IntentFilter filter_dynamic = new IntentFilter();
         filter_dynamic.addAction("com.suntrans.beijing.RECEIVE");  //为IntentFilter添加Action，接收的Action与发送的Action相同时才会出发onReceive
+
         registerReceiver(broadcastreceiver, filter_dynamic);    //动态注册broadcast receiver
+        StatusBarCompat.compat(this, Color.TRANSPARENT);//设置状态栏为透明颜色
+        setContentView(getLayoutId());
+        //初始化控件
+        initViews(savedInstanceState);
+        initData();
+    }
+
+    public void initViews(Bundle savedInstanceState) {
 
         Intent intent = getIntent();
         Meter_Type = intent.getIntExtra("Meter_Type", 0);//表的类型
@@ -117,20 +133,6 @@ public class Meter_Activity extends BaseActivity1 {
         recyclerView.setAdapter(adapter);
     }
 
-
-    @Override
-    protected void onStart() {
-
-        super.onStart();
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-    }
-
     @Override
     protected void onDestroy() {
         unbindService(con);   //解除Service的绑定
@@ -138,13 +140,6 @@ public class Meter_Activity extends BaseActivity1 {
         super.onDestroy();
     }
 
-
-    @Override
-    public void initToolBar() {
-
-    }
-
-    @Override
     public int getLayoutId() {
         return R.layout.meter;
     }
@@ -155,7 +150,6 @@ public class Meter_Activity extends BaseActivity1 {
         super.onPause();
     }
 
-    @Override
     public void initData(){
         data.clear();   //先清空数据
         switch (Meter_Type){
@@ -463,10 +457,33 @@ public class Meter_Activity extends BaseActivity1 {
 
     /**
      * 解析热量表数据
-     * @param data
+     * @param datas
      */
-    private void parseHot(byte[] data) {
+    private void parseHot(byte[] datas) {
+        // String ipaddr = (String) (map.get("ipaddr"));    //开关的IP地址
+        String s = Converts.Bytes2HexString(datas);         //保存命令的十六进制字符串
+        Converts.Bytes2HexString(datas);
+        s = s.replace(" ", ""); //去掉空格
+        if (!TextUtils.equals(s.substring(0,6),"f36820")){
+            return;
+        }
+        s=s.substring(2,s.length());
+        String coldSum = s.substring(28,30);
 
+    }
+    /**
+     * 解析气表数据
+     * @param datas
+     */
+    private void parseAir(byte[] datas) {
+        String s = "";                       //保存命令的十六进制字符串
+        for (int i = 0; i < datas.length; i++) {
+            String s1 = Integer.toHexString((datas[i] + 256) % 256);   //byte转换成十六进制字符串(先把byte转换成0-255之间的非负数，因为java中的数据都是带符号的)
+            if (s1.length() == 1)
+                s1 = "0" + s1;
+            s = s + s1;
+        }
+        s = s.replace(" ", ""); //去掉空格
     }
 
 
@@ -494,13 +511,6 @@ public class Meter_Activity extends BaseActivity1 {
         }
     };//广播接收器
 
-    /**
-     * 解析气表数据
-     * @param data
-     */
-    private void parseAir(byte[] data) {
-
-    }
 
 
 }

@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.suntrans.smartshow.Convert.Converts;
+import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.utils.LogUtil;
 
 import java.io.BufferedReader;
@@ -28,17 +29,13 @@ import java.net.Socket;
 
 /**
  * Create by 1111b on 2015/12/12.
- *  主串口服务器service，与服务器连接，监听服务器发送的消息，并广播。在用户登录成功时启动
+ *  主service，与服务器连接，监听服务器发送的消息，并广播。在用户登录成功时启动
  */
-public class MainService1 extends Service {
+public class SixSensorService extends Service {
     public Socket client=null;    //保持TCP连接的socket
-  //  private String serverip="192.168.1.235";
-   // public CalendarContract.Instances instances;
-//    public String serverip="192.168.1.47";
-  public String serverip="192.168.1.213";     //服务器IP
+
+  public String serverip="192.168.1.235";     //服务器IP
     public int port=8000;    //服务器端口
-//    public int port=2000;  //服务器端口
-    private String Addr="0001";    //第六感官的地址，从0000到ffff。跟用户名相对应
     private IBinder binder;
     private String SerialNumber;   //手机唯一标识
     private ConnectivityManager mConnectivityManager;
@@ -46,13 +43,14 @@ public class MainService1 extends Service {
     public static int SWITCH=2;      //开关代号
     public static int THREEPHASE=3;  //三相电表代号
     public static int SIXSENSOR=4;   //第六感代号
-
+    boolean isInnerNet;//是否为内网模式
     @Override   //当activity与service绑定的时候会调用此方法
     public IBinder onBind(Intent intent) {
         Log.v("Service", "ServiceDemo onBind");
-        SharedPreferences sharedPreferences= getSharedPreferences("data", Activity.MODE_PRIVATE);
-//        serverip =sharedPreferences.getString("serverip", "-1");   //读取服务器ip，若没有则是-1
-//        port= Integer.valueOf(sharedPreferences.getString("port", "8086"));
+        //从本地文件读取ip和端口号，默认为内网模式
+        serverip = BaseApplication.getSharedPreferences().getString("sixIpAddress","192.168.1.235");
+        port =BaseApplication.getSharedPreferences().getInt("sixPort",8000);
+        isInnerNet = port==8000?true:false;//判断是否为内网
 
         Log.i("Intenet", "serverip==>" + serverip);
         if(client==null)   //如果client为空，则建立连接
@@ -60,31 +58,10 @@ public class MainService1 extends Service {
                 public void run(){   //新建线程连接服务器，不占用主线程
                     try
                     {
-                        //获取服务器ip
 //                        final InetAddress serverAddr = InetAddress.getByName(serverip);// TCPServer.SERVERIP
-                        //定义socketaddress
                         //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, port);
                         client = new Socket(serverip, port);   //新建TCP连接
                         new TCPServerThread().start();    //开启新的线程接收数据
-                        //client.connect(my_sockaddr,5000);	  //第二个参数是timeout
-                        Thread.sleep(100);
-                        DataOutputStream out=new DataOutputStream(client.getOutputStream());
-                        // 把用户输入的内容发送给server
-                        //String toServer = "ab68 F006 0500 000a 14 0001 0002 0003 0004 0005 0006 0007 0008 0009 000a";    //查询开关所有通道的状态
-                        String toServer="ab70 "+SerialNumber;  //发送手机地址
-                        toServer.replace(" ","");    //去掉空格
-                        byte[] bt=null;
-                        bt= Converts.HexString2Bytes(toServer);
-                        String str=toServer+Converts.GetCRC(bt, 2, bt.length);   //添加校验码
-                        Log.i("Order",str);
-                        byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
-                        if(!client.isClosed())
-                        {
-                            out.write(bt1);
-                            out.flush();
-                            //out.close();   //关闭输出流
-                        }
-
                     }
                     catch (Exception e) {
                         // TODO Auto-generated catch block
@@ -113,18 +90,12 @@ public class MainService1 extends Service {
                             byte[] bt=null;
                             bt=Converts.HexString2Bytes(toServer);
                             String str="";
-                            if(dev==SWITCH)//路灯
-                                str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
-                            else if (dev==3)//电表
-                                str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
-                            else if (dev==6)//水表
-                                str = "f3"+toServer+"16";
-                            else if (dev==5)//氙气灯
-                                str =toServer;
-                            else if (dev==7)
-                                str = toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
-                            else if (dev==8)//三相电表
-                                str ="f8"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                            if(dev==SWITCH||dev==SIXSENSOR)
+                                if (isInnerNet){
+                                    str= toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                }else {
+
+                                }
                             Log.i("Order","发送数据："+str);
                             byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                             if(!client.isClosed())
@@ -172,22 +143,13 @@ public class MainService1 extends Service {
                                 }
                                 Thread.sleep(100);
                                 toServer =  order;    //指令，添加包头和第六感官地址
-                                toServer=toServer.replace(" ", "");    //去掉空格
+                                toServer.replace(" ", "");    //去掉空格
                                 bt = null;
                                 bt = Converts.HexString2Bytes(toServer);
                                 if(dev==SWITCH||dev==SIXSENSOR){
                                     str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
                                     LogUtil.i("service发送命令：="+str);
-                                } else if (dev==3)//电表
-                                    str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
-                                else if (dev==6)//水表
-                                    str = "f3"+toServer+"16";
-                                else if (dev==5)//氙气灯
-                                    str =toServer;
-                                else if (dev==7)//路灯
-                                    str = toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
-                                else if (dev==8)//三相电表
-                                    str ="f8"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                                }
                                 LogUtil.i("service发送命令：="+str);
                                 bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                                 if (!client.isClosed()) {
@@ -213,11 +175,7 @@ public class MainService1 extends Service {
     @Override   //只调用一次
     public void onCreate() {
         Log.v("Service", "ServiceDemo onCreate");
-      //  SerialNumber = android.os.Build.SERIAL;   //获取唯一标识
-//        if(SerialNumber!=null)
-//            SerialNumber=SerialNumber.length()>3?SerialNumber.substring(SerialNumber.length()-4,SerialNumber.length()):"0000";
-//        else
-//            SerialNumber="0000";
+
         SerialNumber = "0001";
         Log.i("Internet", "网络状态：" + (IsNetWork() ? "可用" : "不可用"));   //判断网络状态,打开wifi显示可用，关闭wifi显示不可用。但是不确定能不能联网
         IntentFilter mFilter = new IntentFilter();
@@ -310,7 +268,7 @@ public class MainService1 extends Service {
                                         byte[] tem=Converts.HexString2Bytes(str+"0d0a");   //转换成byte数组
                                         if(tem.length>=14) {
                                             Intent intent = new Intent();
-                                            intent.setAction("com.suntrans.beijing.RECEIVE");
+                                            intent.setAction("com.suntrans.beijing.RECEIVE1");
                                             intent.putExtra("ContentNum", tem.length);   //数组长度
                                             intent.putExtra("Content", tem);   //命令内容数组
                                             sendBroadcast(intent);   //发送广播，通知各个activity

@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -32,11 +33,15 @@ import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.service.SmartHomeService;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
+import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static android.R.attr.id;
+import static android.media.CamcorderProfile.get;
 
 
 /**
@@ -48,14 +53,14 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
     private TextView tv_title;
     private RecyclerView recyclerView;
     private SwipeRefreshLayout refreshLayout;
-    private   ArrayList<Map<String,String>> state1;
-    private   ArrayList<Map<String,String>> state2;
-    private   ArrayList<Map<String,String>> state3;
+    private   ArrayList<Map<String,String>> state1;//00010001开关状态
+    private   ArrayList<Map<String,String>> state2;//00010002开关状态
+    private   ArrayList<Map<String,String>> state3;//00010003开关状态
     private String road_addr1 = "00010001";
     private String road_addr2 = "00010002";
     private String road_addr3 = "00010003";
     private  byte[] bits={(byte)0x01,(byte)0x02,(byte)0x04,(byte)0x08,(byte)0x10,(byte)0x20,(byte)0x40,(byte)0x80};     //从1到8只有一位是1，用于按位与计算，获取某一位的值
-    private ArrayList<Map<String, String>> data = new ArrayList<>();
+    private ArrayList<Map<String, String>> data = new ArrayList<>();//存储各个通道的名称和当前状态
     private  SmartHomeService.ibinder binder;  //用于Activity与Service通信
 
     private int area;
@@ -112,37 +117,48 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 Map<String, String> map1 = new HashMap<>();
                 map1.put("Name", "客厅插座");
                 map1.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map1.put("state","0");
+                map1.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map1);
 
                 Map<String, String> map2 = new HashMap<>();
                 map2.put("Name", "电视机");
                 map2.put("Image", String.valueOf(R.drawable.ic_tv1_off));
+                map2.put("state","0");
+                map2.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map2);
 
                 Map<String, String> map3 = new HashMap<>();
                 map3.put("Name", "客厅灯");
                 map3.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                map3.put("state","0");
+                map3.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map3);
 
                 Map<String, String> map4 = new HashMap<>();
                 map4.put("Name", "客厅壁灯");
                 map4.put("Image", String.valueOf(R.drawable.ic_wall_off));
+                map4.put("state","0");
+                map4.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map4);
                 break;
             case 1:
                 Map<String, String> map5 = new HashMap<>();
                 map5.put("Name", "餐厅灯");
                 map5.put("Image", String.valueOf(R.drawable.ic_wall_off));
+                map5.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map5);
 
                 Map<String, String> map6 = new HashMap<>();
                 map6.put("Name", "冰箱");
                 map6.put("Image", String.valueOf(R.drawable.ic_binxiang_off));
+                map6.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map6);
 
                 Map<String, String> map7 = new HashMap<>();
                 map7.put("Name", "餐厅插座");
                 map7.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map7.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map7);
                 break;
             case 2:
@@ -160,6 +176,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 map10.put("Name", "厨房灯");
                 map10.put("Image", String.valueOf(R.drawable.ic_bulb_off));
                 data.add(map10);
+                break;
             case 3:
                 Map<String, String> map11 = new HashMap<>();
                 map11.put("Name", "书房灯");
@@ -173,8 +190,83 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
                 Map<String, String> map13 = new HashMap<>();
                 map13.put("Name", "电脑");
-                map13.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                map13.put("Image", String.valueOf(R.drawable.ic_computer_off));
                 data.add(map13);
+                break;
+            case 4:
+                Map<String, String> map14 = new HashMap<>();
+                map14.put("Name", "卫生间灯");
+                map14.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                data.add(map14);
+
+                Map<String, String> map15 = new HashMap<>();
+                map15.put("Name", "热水器");
+                map15.put("Image", String.valueOf(R.drawable.ic_hotwater_off));
+                data.add(map15);
+
+                Map<String, String> map16 = new HashMap<>();
+                map16.put("Name", "卫生间插座");
+                map16.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                data.add(map16);
+                break;
+            case 5:
+                Map<String, String> map17 = new HashMap<>();
+                map17.put("Name", "主卧壁灯");
+                map17.put("Image", String.valueOf(R.drawable.ic_wall_off));
+                data.add(map17);
+
+                Map<String, String> map18 = new HashMap<>();
+                map18.put("Name", "主卧阳台灯");
+                map18.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                data.add(map18);
+
+                Map<String, String> map19 = new HashMap<>();
+                map19.put("Name", "主卧灯");
+                map19.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                data.add(map19);
+
+                Map<String, String> map20 = new HashMap<>();
+                map20.put("Name", "主卧空调");
+                map20.put("Image", String.valueOf(R.drawable.ic_kongtiao_off));
+                data.add(map20);
+
+                Map<String, String> map21 = new HashMap<>();
+                map21.put("Name", "主卧插座");
+                map21.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                data.add(map21);
+                break;
+            case 6:
+                Map<String, String> map22 = new HashMap<>();
+                map22.put("Name", "次卧插座");
+                map22.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                data.add(map22);
+
+                Map<String, String> map23 = new HashMap<>();
+                map23.put("Name", "次卧空调");
+                map23.put("Image", String.valueOf(R.drawable.ic_kongtiao_off));
+                data.add(map23);
+
+                Map<String, String> map24 = new HashMap<>();
+                map24.put("Name", "次卧灯");
+                map24.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                data.add(map24);
+
+                Map<String, String> map25 = new HashMap<>();
+                map25.put("Name", "次卧壁灯");
+                map25.put("Image", String.valueOf(R.drawable.ic_wall_off));
+                data.add(map25);
+                break;
+            case 7:
+                Map<String, String> map26 = new HashMap<>();
+                map26.put("Name", "走廊灯");
+                map26.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                data.add(map26);
+                break;
+            case 8:
+                Map<String, String> map27 = new HashMap<>();
+                map27.put("Name", "洗衣机");
+                map27.put("Image", String.valueOf(R.drawable.ic_xiyiji_off));
+                data.add(map27);
                 break;
         }
         //开关一状态
@@ -185,6 +277,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         for (int i=0;i<10;i++){
             Map<String,String> map = new HashMap<String,String>();
             map.put("state","0");
+            map.put("position", String.valueOf(i));
             state1.add(map);
             state2.add(map);
             state3.add(map);
@@ -201,13 +294,31 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 getSwitchStateFromServer();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                            UiUtils.showToast(UiUtils.getContext(),"请求服务器失败，请稍后再试");
+                        }
+                    }
+                }, 2000);
             }
         });
-//        getSwitchStateFromServer();
-
+        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                while (isrun){
+                    if (binder!=null){
+                        getSwitchStateFromServer();
+                        isrun=false;
+                    }
+                }
+            }
+        });
     }
-
-
+    boolean isrun = true;
+    Handler handler = new Handler();
     private mAdapter adapter;
 
     public void initToolBar() {
@@ -254,6 +365,8 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     SmartRoomDetails_Activity.this).inflate(R.layout.road_bulb_item, parent, false));
             return holder;
         }
+//        private int[] ketingBitmapId_off={R.drawable.ic_chazuo_off,R.drawable.ic_tv1_off,R.drawable.ic_bulb_off,R.drawable.ic_wall_off};
+//        private int[] ketingBitmapId_on={R.drawable.ic_chazuo_off,R.drawable.ic_tv1_off,R.drawable.ic_bulb_off,R.drawable.ic_wall_off};
 
         /***
          * 绑定数据
@@ -265,25 +378,23 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
             String name = data.get(position).get("name");
             int id = Integer.valueOf(data.get(position).get("Image"));
-
+            int idDot = Integer.valueOf(data.get(position).get("dot"));
             Bitmap bitmap = BitmapFactory.decodeResource(SmartRoomDetails_Activity.this.getResources(), id);
+            Bitmap bitmapDot = BitmapFactory.decodeResource(SmartRoomDetails_Activity.this.getResources(), idDot);
             bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
 
             ((viewHolder1) holder).image.setImageBitmap(bitmap);
+//            ((viewHolder1) holder).dot.setImageBitmap(bitmapDot);
             ((viewHolder1) holder).textView.setText(data.get(position).get("Name"));
             ((viewHolder1) holder).image.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (area==0){
-                        switch (position){
-                            case 0:
-                                binder.sendOrder("aa68 00010001 06 0304 0001",2);
-                        }
-                    }
+                    parseClick(v,position);
                 }
             });
 
         }
+
 
 
         @Override
@@ -310,11 +421,13 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         class viewHolder1 extends RecyclerView.ViewHolder {
             ImageView image;    //图标
             TextView textView;
+            ImageView dot;    //图标
 
             public viewHolder1(View view) {
                 super(view);
                 image = (ImageView) view.findViewById(R.id.iv);
                 textView = (TextView) view.findViewById(R.id.name);
+                dot = (ImageView) findViewById(R.id.dot);
             }
         }
 
@@ -338,7 +451,6 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
         unregisterReceiver(broadcastreceiver);  //注销广播接收者
         unbindService(con);   //解除Service的绑定
-
         super.onDestroy();
     }
 
@@ -354,80 +466,6 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 break;
         }
     }
-    /**
-     * 解析返回的数据：
-     */
-    private void parseData(String s) {
-        String addr;
-        if (s.length()>20){
-            addr= s.substring(11,12);   //返回数据的开关地址最后一位
-            System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:"+s+"地址为"+addr);
-            byte[] a = Converts.HexString2Bytes(s);
-            if (TextUtils.equals("1",addr)){//若是开关一
-                if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
-                {
-                    if (s.substring(14, 16).equals("0e")||s.substring(14,16).equals("07"))
-                    {
-                        String[] states={"0","0","0","0","0","0","0","0","0","0"};   //十个通道的状态，state[0]对应1通道
-                        for(int i=0;i<8;i++)   //先获取前八位的开关状态
-                        {
-                            states[i]=((a[9]&bits[i])==bits[i])?"1":"0";   //1-8通道
-
-                        }
-                        for(int i=0;i<2;i++)
-                        {
-                            states[i+8]=((a[8]&bits[i])==bits[i])?"1":"0";  //9、10通道
-
-                        }
-
-                        for(int i= 0;i<state1.size();i++){
-                            if (TextUtils.equals(addr,"0")){
-                                state1.get(i).put("state",states[i]);
-                            }
-                        }
-
-                    }
-                }
-                else if(s.substring(12,14).equals("06"))   //单个通道状态发生改变
-                {
-                    int k=0;         //k是通道号
-                    int state=Integer.valueOf(s.substring(21, 22));  //开关状态，1代表打开，0代表关闭
-                    if(s.substring(17,18).equals("a"))
-                        k=10;
-                    else
-                        k=Integer.valueOf(s.substring(17, 18));   //通道号,int型
-                    if(k==0)                                          //如果通道号为0，则是总开关
-                    {
-                        if (state==0){
-                            for (int i=0;i<state1.size();i++){
-                                if (TextUtils.equals(addr,"0")){
-                                    state1.get(i).put("state","0");
-                                }
-                            }
-                        }
-                    }
-                    else     //如果通道号不为0，则更改data中的状态，并更新
-                    {
-//                                    String[] state2={"0","0","0","0","0","0","0","0","0","0"};   //十个通道的状态，state[0]对应1通道
-//                                    state2[k-1] = state+"";
-                        for (int i=0;i<state1.size();i++){
-                            if (TextUtils.equals(addr,"0")){
-                                if (state1.get(i).get("position").equals(String.valueOf(k-1))){
-                                    state1.get(i).put("state",state==1?"1":"0");
-                                }
-                            }
-
-                        }
-                    }
-                }
-                for (int i=0;i<state1.size();i++){
-                    LogUtil.i(state1.get(i).get("state"));
-                }
-            }
-        }
-
-
-    }//parsedata结束
 
 
     private String return_addr;//开关地址
@@ -445,8 +483,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             s = Converts.Bytes2HexString(bytes);
             s = s.split("0d0a")[0] + "0d0a";
             if (s.length() > 20) {
-//                s = s.substring(2, s.length());
-                return_addr = s.substring(4, 12);   //返回数据的开关地址
+                return_addr = s.substring(11, 12);   //返回数据的开关地址末位
                 System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:" + s);
                 byte a[] = Converts.HexString2Bytes(s);
                 if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
@@ -463,8 +500,10 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
                         }
 
-                        for (int i = 0; i < state1.size(); i++) {
-                            state1.get(i).put("state", states[i]);
+                        for (int i = 0; i < state1.size(); i++) {//更新状态到集合中
+                            if (return_addr.equals("1")){
+                                state1.get(i).put("state", states[i]);
+                            }
                         }
 
                     }
@@ -479,8 +518,10 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     if (k == 0)                                          //如果通道号为0，则是总开关
                     {
                         if (state == 0) {
-                            for (int i = 0; i < state1.size(); i++) {
-                                state1.get(i).put("state", "0");
+                            for (int i = 0; i < state1.size(); i++) {//更新状态到集合中
+                                if (return_addr.equals("1")){
+                                    state1.get(i).put("state", "0");
+                                }
                             }
                         }
                     } else     //如果通道号不为0，则更改data中的状态，并更新
@@ -489,7 +530,10 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 //                                    state2[k-1] = state+"";
                         for (int i = 0; i < state1.size(); i++) {
                             if (state1.get(i).get("position").equals(String.valueOf(k - 1))) {
-                                state1.get(i).put("state", state == 1 ? "1" : "0");
+                                if (return_addr.equals("1")){
+                                    state1.get(i).put("state", state == 1 ? "1" : "0");
+                                    System.out.println("当前通道"+state1.get(i).get("state"));
+                                }
                             }
                         }
                     }
@@ -498,15 +542,107 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     for (int i = 0; i < state1.size(); i++) {
                         System.out.println(state1.get(i).get("state"));
                     }
-                    refreshLayout.setRefreshing(false);
-                    UiUtils.showToast(UiUtils.getContext(), "刷新成功！");
-                    adapter.notifyDataSetChanged();
-//                }
+                    if (area==0){
+                        //更新保存的状态
+                         data.get(0).put("state",state1.get(1).get("state"));
+                         data.get(1).put("state",state1.get(5).get("state"));
+                         data.get(2).put("state",state1.get(6).get("state"));
+                         data.get(3).put("state",state1.get(8).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_chazuo_off:R.drawable.ic_chazuo_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_tv1_off:R.drawable.ic_tv1_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+                        data.get(3).put("Image",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_wall_off:R.drawable.ic_wall_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(3).put("dot",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+
+                    }else if (area==1){
+
+                    }
+                    UiUtils.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            refreshLayout.setRefreshing(false);
+                            UiUtils.showToast(UiUtils.getContext(), "刷新成功！");
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+
                 }
 
             }
         }
 
     } ;//广播接收器
+
+
+    private void parseClick(View v, int position) {
+        if (area==0){
+            switch (position){//客厅对应1号开关2，6，7，8通道
+                case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68 00010001 06 0302 0001",2);
+                    }else {
+                        binder.sendOrder("aa68 00010001 06 0302 0000",2);
+                    }
+                    break;
+                case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68 00010001 06 0306 0001",2);
+                    }else {
+                        binder.sendOrder("aa68 00010001 06 0306 0000",2);
+                    }
+                    break;
+                case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68 00010001 06 0307 0001",2);
+                    }else {
+                        binder.sendOrder("aa68 00010001 06 0307 0000",2);
+                    }
+                    break;
+                case 3:
+                    if(data.get(3).get("state").equals("0")){
+                        binder.sendOrder("aa68 00010001 06 0309 0001",2);
+                    }else {
+                        binder.sendOrder("aa68 00010001 06 0309 0000",2);
+                    }
+                    break;
+            }
+        }else if (area==1){//餐厅
+            switch (position){
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+        }else if (area==2){//厨房
+            switch (position){
+                case 0:
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+            }
+        }else if (area==3){//书房
+
+        }else if (area==4){//卫生间
+
+        }else if (area==5){//主卧室
+
+        }else if (area==6){//次卧室
+
+        }else if (area==7){//走廊
+
+        }else if (area==8){//阳台
+
+        }
+    }
 }
 

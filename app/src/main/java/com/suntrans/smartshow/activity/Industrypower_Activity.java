@@ -8,13 +8,14 @@ import android.widget.LinearLayout;
 
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.base.BaseActivity;
+import com.suntrans.smartshow.base.BaseActivity1;
 
 /**
  * 工业用电页面，三相开关状态获取和电机控制。
  * Created by Looney on 2016/9/24.
  */
 
-public class Industrypower_Activity extends BaseActivity implements View.OnClickListener {
+public class Industrypower_Activity extends BaseActivity1 implements View.OnClickListener {
     private LinearLayout layout_back;
     private Button layout_con;
     private Button layout_state;

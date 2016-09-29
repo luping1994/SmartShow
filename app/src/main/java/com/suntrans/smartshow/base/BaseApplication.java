@@ -20,9 +20,21 @@ public class BaseApplication extends Application {
         application=this;
         mainTid=android.os.Process.myTid();
         mHandler=new Handler();
+        boolean frist = getSharedPreferences().getBoolean("isFristCome",true);
+        if (frist){
+            getSharedPreferences().edit().putBoolean("isFristCome",false).commit();
+        }else {
+            getSharedPreferences().edit().putString("sixIpAddress","192.168.1.235");
+            getSharedPreferences().edit().putInt("sixPort",8000);
+
+            getSharedPreferences().edit().putString("chunkouIpAddress","192.168.1.213");
+            getSharedPreferences().edit().putInt("chunkouPort",8000);
+        }
     }
     public static SharedPreferences getSharedPreferences(){
-        msharedPreferences = getApplication().getSharedPreferences("config",Context.MODE_PRIVATE);
+        if (msharedPreferences==null){
+            msharedPreferences = getApplication().getSharedPreferences("config",Context.MODE_PRIVATE);
+        }
         return msharedPreferences;
     }
     public static Context getApplication() {

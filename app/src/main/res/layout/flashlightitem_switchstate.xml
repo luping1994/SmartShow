@@ -14,12 +14,19 @@
             android:scaleType="fitCenter"
             android:id="@+id/image"
             android:src="@drawable/switchon"/>
-
-        <Switch
-            android:layout_marginLeft="10dip"
-            android:layout_width="match_parent"
-            android:layout_height="fill_parent"
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
             android:text="开关状态"
+            android:textSize="17sp"
+            android:gravity="center|left"
+            android:layout_marginLeft="10dip"
+            android:textColor="@color/tx_color"/>
+        <com.suntrans.smartshow.views.Switch
+            android:layout_gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:textColor="@color/tx_color"
             android:id="@+id/value"
             android:layout_marginRight="15dip"

@@ -17,6 +17,7 @@ import com.suntrans.smartshow.adapter.RoadBulbAdapter;
 import com.suntrans.smartshow.base.BaseActivity;
 import com.suntrans.smartshow.bean.FlashlightInfo;
 import com.suntrans.smartshow.utils.RxBus;
+import com.suntrans.smartshow.views.Switch;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class Flashlight_Activity extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_back_normal);
-            textView.setText("疝气灯");
+            textView.setText("氙气灯");
         }
     }
 
@@ -76,6 +77,16 @@ public class Flashlight_Activity extends BaseActivity {
             @Override
             public void onRefresh() {
 
+            }
+        });
+        adapter.setmOnSwitchListener(new FlashLightAdapter.onSwitchListener() {
+            @Override
+            public void onChanged(Switch switchView, boolean isChecked) {
+                if (isChecked){
+                    binder.sendOrder("F5 01 01 08 06 02 00 00 01 D8 37",5);
+                }else {
+                    binder.sendOrder("F5 01 01 08 06 02 00 00 00 19 F7",5);
+                }
             }
         });
     }

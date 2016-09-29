@@ -7,12 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.bean.FlashlightInfo;
+import com.suntrans.smartshow.views.Switch;
 
 /**
  * Created by Looney on 2016/9/18.
@@ -63,6 +62,12 @@ public class FlashLightAdapter extends  RecyclerView.Adapter <RecyclerView.ViewH
                 ((viewHolder1)holder).setdata(position);
             }else if (holder instanceof  viewHolder2){
                 ((viewHolder2)holder).setData(position);
+                ((viewHolder2)holder).value.setOnChangeListener(new Switch.OnSwitchChangedListener() {
+                    @Override
+                    public void onSwitchChange(Switch switchView, boolean isChecked) {
+                        mOnSwitchListener.onChanged(switchView,isChecked);
+                    }
+                });
 
             }else if (holder instanceof  viewHolder3){
                 ((viewHolder3)holder).setData(position);
@@ -72,7 +77,15 @@ public class FlashLightAdapter extends  RecyclerView.Adapter <RecyclerView.ViewH
             }
         }
 
+        public interface onSwitchListener{
+            void onChanged(Switch switchView, boolean isChecked);
+        }
 
+    public void setmOnSwitchListener(onSwitchListener mOnSwitchListener) {
+        this.mOnSwitchListener = mOnSwitchListener;
+    }
+
+    private onSwitchListener mOnSwitchListener;
 
         @Override
         public int getItemCount()

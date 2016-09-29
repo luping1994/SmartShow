@@ -1,14 +1,22 @@
 package com.suntrans.smartshow.activity;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,34 +25,39 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
-import com.suntrans.smartshow.base.BaseActivity;
+import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.service.MainService1;
-import com.suntrans.smartshow.utils.RxBus;
+import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.ThreadManager;
+import com.suntrans.smartshow.utils.UiUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import rx.Subscriber;
-import rx.Subscription;
 
 
 /**
  * Created by pc on 2016/9/16.
  * 三相电表参数页面
  */
-public class IndustryState_Activity extends BaseActivity {
+public class IndustryState_Activity extends AppCompatActivity {
 
     public MainService1.ibinder binder;  //用于Activity与Service通信
     private LinearLayout layout_back;    //返回键
     private TextView tx_title;   //标题
     private SwipeRefreshLayout refreshLayout;   //下拉刷新控件
     private RecyclerView recyclerView;   //列表控件
-    private String title;
+    private String title;//标题值
     private ArrayList<Map<String, String>> data = new ArrayList<>();
     private TextView textView;
+    private String date = "null";
+    private static boolean refresh = true;
+    Handler handler = new Handler();
+    private mAdapter adapter;
     /**
      * 服务连接
      */
@@ -62,11 +75,22 @@ public class IndustryState_Activity extends BaseActivity {
     };
 
     @Override
-    public void initViews(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Intent intent1 = new Intent(BaseApplication.getApplication(), MainService1.class);    //指定要绑定的service
+        bindService(intent1, connection, Context.BIND_AUTO_CREATE);   //绑定主service
+        // 注册自定义动态广播消息。根据Action识别广播
+        IntentFilter filter_dynamic = new IntentFilter();
+        filter_dynamic.addAction("com.suntrans.beijing.RECEIVE");  //为IntentFilter添加Action，接收的Action与发送的Action相同时才会出发onReceive
+        registerReceiver(broadcastreceiver, filter_dynamic);    //动态注册broadcast receiver
 
-//        Intent intent1 = new Intent(BaseApplication.getApplication(), MainService.class);    //指定要绑定的service
-//        bindService(intent1, connection, Context.BIND_AUTO_CREATE);   //绑定主service
-        initRx();
+        setContentView(R.layout.meter);
+        initViews();
+        initData();
+    }
+
+    public void initViews(){
+
         layout_back = (LinearLayout) findViewById(R.id.layout_back);
         tx_title = (TextView) findViewById(R.id.tx_title);
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshlayout);
@@ -83,61 +107,88 @@ public class IndustryState_Activity extends BaseActivity {
         tx_title.setText(title);
         recyclerView.setLayoutManager(new LinearLayoutManager(IndustryState_Activity.this));   //设置布局方式
         recyclerView.addItemDecoration(new RecyclerViewDivider(IndustryState_Activity.this, LinearLayoutManager.VERTICAL));  //设置分割线
-        recyclerView.setAdapter(new mAdapter());
-
+        adapter= new mAdapter();
+        recyclerView.setAdapter(adapter);
+        //下拉刷新数据
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-//                String order = "FE 68 14 29 00 07 14 20 68 1F 00";
-//                binder.sendOrder(order,3);
+                ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean refresh = true;
+                        while (refresh){
+                            if (binder!=null){
+                                String order = "FE 68 09 01 00 12 14 20 68 1F 00";
+                                binder.sendOrder(order,8);
+                                refresh=false;
+                            }
+                        }
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (refreshLayout.isRefreshing()){
+                                    refreshLayout.setRefreshing(false);
+                                    UiUtils.showToast(UiUtils.getContext(),"刷新失败，请重试！");
+                                }
+                            }
+                        },2000);
+                    }
+                });
+            }
+        });
+        //保证一进页面就刷新获得数据
+        refreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                boolean refresh = true;
+                while (refresh){
+                    if (binder!=null){
+                        String order = "FE 68 09 01 00 12 14 20 68 1F 00";
+                        binder.sendOrder(order,8);
+                        refresh=false;
+                    }
+                }
+            }
+        });
+        //新进线程刷新数据
+        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                while (refresh){
+                    if (binder!=null){
+                        String order = "FE 68 09 01 00 12 14 20 68 1F 00";
+                        binder.sendOrder(order,8);
+                    }
+                    try {
+                        Thread.sleep(7000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
     }
 
     @Override
     protected void onDestroy() {
-//        unbindService(connection);   //解除Service的绑定
+        unbindService(connection);   //解除Service的绑定
+        unregisterReceiver(broadcastreceiver);  //注销广播接收者
+        refresh = false;
         super.onDestroy();
     }
 
-    private Subscription rxsub;
-    private void initRx() {
-        rxsub = RxBus.getInstance().toObserverable(byte[].class).subscribe(new Subscriber<byte[]>() {
-            @Override
-            public void onCompleted() {
 
-            }
 
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(byte[] bytes) {
-                //bytes 是返回的16进制命令
-                refreshListView();
-            }
-        });
-    }
-
-    @Override
-    public void initToolBar() {
-
-    }
-
-    @Override
     public int getLayoutId() {
         return R.layout.meter;
     }
 
     @Override
     protected void onPause() {
-//        rxsub.unsubscribe();
         super.onPause();
     }
 
-    @Override
     public void initData(){
         data.clear();   //先清空数据
 
@@ -194,7 +245,8 @@ public class IndustryState_Activity extends BaseActivity {
         map10.put("Name","C相电流");
         map10.put("Value","null");
         map10.put("Image", String.valueOf(R.drawable.ic_current));
-        data.add(map8);
+        data.add(map10);
+
     }
     /**
      * RecyclerView适配器
@@ -243,7 +295,7 @@ public class IndustryState_Activity extends BaseActivity {
                 viewholder.value.setText(Value);
             }else {
                 viewHolder2 viewholder = (viewHolder2) holder;
-                viewholder.value.setText("2016/9/23");
+                viewholder.value.setText(date);
             }
         }
 
@@ -304,10 +356,50 @@ public class IndustryState_Activity extends BaseActivity {
         }
     }
 
-    /**
-     * 刷新数据
-     */
-    private void refreshListView(){
+    byte[] a ;
+    //新建广播接收器，接收服务器的数据并解析，
+    protected BroadcastReceiver broadcastreceiver=new BroadcastReceiver() {
+        @Override
+        public void onReceive (Context context, Intent intent){
+            byte[] bytes = intent.getByteArrayExtra("Content");
+            String s = Converts.Bytes2HexString(bytes);
+            if (s.substring(0,6).equals("F8FE68")){
+                s = s.substring(2,s.length());
+                LogUtil.i("三相电表数据为:"+s);
+                a=Converts.HexString2Bytes(s);
+                final String return_addr=s.substring(4,16);  //反向电表表号
+                double VA = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[12] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[11] & 0xff) - 51)}))) / 10.0;  //A相电压。单位是V
+                double VB = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[14] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[13] & 0xff) - 51)}))) / 10.0;  //B相电压
+                double VC = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[16] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[15] & 0xff) - 51)}))) / 10.0;  //C相电压
+                double IA = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[19] & 0xff) - 51)})) * 10000 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[18] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[17] & 0xff) - 51)}))) / 1000.0;  //A相电流，单位是A
+                double IB = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[22] & 0xff) - 51)})) * 10000 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[21] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[20] & 0xff) - 51)}))) / 1000.0;  //B相电流
+                double IC = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[25] & 0xff) - 51)})) * 10000 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[24] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[23] & 0xff) - 51)}))) / 1000.0;  //C相电流
+                double Active_Power = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[28] & 0xff) - 51)})) * 10000 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[27] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[26] & 0xff) - 51)}))) / 10000.0;  //总有功功率，单位是kW
+                double Reactive_Power = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[40] & 0xff) - 51)})) * 10000 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[39] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[38] & 0xff) - 51)}))) / 10000.0;  //总无功功率，单位是kW
+                double Powerrate = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[51] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[50] & 0xff) - 51)}))) / 10.0;  //总功率因数
+                double Electricity = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[61] & 0xff) - 51)})) * 10000 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[60] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[59] & 0xff) - 51)}))) + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[58] & 0xff) - 51)})) / 100.0;  //总用电量，单位是kWh
+                data.get(0).put("Value", String.valueOf(Electricity)+"kWh");
+                data.get(1).put("Value", String.valueOf(Active_Power)+"kW");
+                data.get(2).put("Value", String.valueOf(Reactive_Power)+"kvar");
+                data.get(3).put("Value", String.valueOf(Powerrate)+"");
+                data.get(4).put("Value", String.valueOf(VA)+"V");
+                data.get(5).put("Value", String.valueOf(VB)+"V");
+                data.get(6).put("Value", String.valueOf(VC)+"V");
+                data.get(7).put("Value", String.valueOf(IA)+"I");
+                data.get(8).put("Value", String.valueOf(IB)+"I");
+                data.get(9).put("Value", String.valueOf(IC)+"I");
 
-    }
+                SimpleDateFormat sdf=new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
+                date=sdf.format(new java.util.Date());
+                UiUtils.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.notifyDataSetChanged();
+                        refreshLayout.setRefreshing(false);
+                    }
+                });
+            }
+        }
+    };//广播接收器
+
 }

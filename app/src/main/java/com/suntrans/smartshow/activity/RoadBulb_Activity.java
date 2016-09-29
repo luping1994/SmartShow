@@ -159,21 +159,21 @@ public class RoadBulb_Activity extends AppCompatActivity{
                 getSwitchState();
             }
         });
-        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                while (isRefresh){
-                    if (binder!=null){
-                        getSwitchState();
-                    }
-                    try {
-                        Thread.sleep(8000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+//        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+//            @Override
+//            public void run() {
+//                while (isRefresh){
+//                    if (binder!=null){
+//                        getSwitchState();
+//                    }
+//                    try {
+//                        Thread.sleep(8000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        });
     }
     Handler handler = new Handler(){
         @Override

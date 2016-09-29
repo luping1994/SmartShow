@@ -43,6 +43,8 @@ public abstract  class BaseActivity extends RxAppCompatActivity {
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        Intent intent = new Intent(getApplicationContext(), MainService1.class);    //指定要绑定的service
+        this.bindService(intent, con, Context.BIND_AUTO_CREATE);   //绑定主service
         StatusBarCompat.compat(this,Color.TRANSPARENT);//设置状态栏为透明颜色
         setContentView(getLayoutId());
         //初始化控件
@@ -54,8 +56,6 @@ public abstract  class BaseActivity extends RxAppCompatActivity {
 
     @Override
     protected void onStart() {
-        Intent intent = new Intent(getApplicationContext(), MainService1.class);    //指定要绑定的service
-        this.bindService(intent, con, Context.BIND_AUTO_CREATE);   //绑定主service
         super.onStart();
     }
 

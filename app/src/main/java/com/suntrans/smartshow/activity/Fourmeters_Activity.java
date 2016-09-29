@@ -12,12 +12,13 @@ import android.widget.TextView;
 
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.base.BaseActivity;
+import com.suntrans.smartshow.base.BaseActivity1;
 
 /**
  * 四个表主页面，展示四个表条目
  * Created by pc on 2016/9/14.
  */
-public class Fourmeters_Activity extends BaseActivity implements View.OnClickListener{
+public class Fourmeters_Activity extends BaseActivity1 implements View.OnClickListener{
     private LinearLayout layout_elec;    //智能电表
     private LinearLayout layout_water;      //数字水表
     private LinearLayout layout_heat;     //数字热量表
