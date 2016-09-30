@@ -142,7 +142,7 @@ public class FlashLightAdapter extends  RecyclerView.Adapter <RecyclerView.ViewH
             }
 
             public void setData(int position) {
-
+                    value.setState(data.isOpen());
             }
         }
     int level = 0;
@@ -186,57 +186,57 @@ public class FlashLightAdapter extends  RecyclerView.Adapter <RecyclerView.ViewH
                 case 4:
                     image.setImageResource(R.drawable.ic_voltage);
                     name.setText("交流电压");
-                    value.setText("null");
+                    value.setText(data.getAlter_UV()+"V");
                     break;
                 case 5:
                     image.setImageResource(R.drawable.ic_current);
                     name.setText("交流电流");
-                    value.setText("null");
+                    value.setText(data.getAlter_current()+"A");
                     break;
                 case 6:
                     image.setImageResource(R.drawable.ic_power);
                     name.setText("交流功率");
-                    value.setText("null");
+                    value.setText(data.getAlter_rate()+"W");
                     break;
                 case 7:
                     image.setImageResource(R.drawable.ic_elec);
                     name.setText("用电量");
-                    value.setText("null");
+                    value.setText(data.getElec_power()+"kWh");
                     break;
                 case 8:
                     image.setImageResource(R.drawable.ic_powerrate);
                     name.setText("功率因素");
-                    value.setText("null");
+                    value.setText(data.getPower_rate()+"");
                     break;
                 case 9:
                     image.setImageResource(R.drawable.ic_voltage);
                     name.setText("输出电压");
-                    value.setText("null");
+                    value.setText(data.getOut_UV()+"V");
                     break;
                 case 10:
                     image.setImageResource(R.drawable.ic_current);
                     name.setText("输出电流");
-                    value.setText("null");
+                    value.setText(data.getOut_current()+"A");
                     break;
                 case 11:
                     image.setImageResource(R.drawable.ic_power);
                     name.setText("输出功率");
-                    value.setText("null");
+                    value.setText(data.getOut_power()+"w");
                     break;
                 case 12:
                     image.setImageResource(R.mipmap.ic_temp);
                     name.setText("电路工作温度");
-                    value.setText("null");
+                    value.setText(data.getTem()+"℃");
                     break;
                 case 13:
                     image.setImageResource(R.drawable.light);
                     name.setText("光照强度");
-                    value.setText("null");
+                    value.setText(data.getLight()+" ");
                     break;
                 case 14:
                     image.setImageResource(R.drawable.ic_power);
                     name.setText("能耗比");
-                    value.setText("null");
+                    value.setText( data.getK()+" ");
                     break;
                 default:
                     break;

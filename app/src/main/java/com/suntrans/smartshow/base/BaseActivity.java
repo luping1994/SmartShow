@@ -1,8 +1,10 @@
 package com.suntrans.smartshow.base;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -10,6 +12,7 @@ import android.os.IBinder;
 import android.widget.Toast;
 
 
+import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
@@ -45,6 +48,11 @@ public abstract  class BaseActivity extends RxAppCompatActivity {
         super.onCreate(savedInstanceState);
         Intent intent = new Intent(getApplicationContext(), MainService1.class);    //指定要绑定的service
         this.bindService(intent, con, Context.BIND_AUTO_CREATE);   //绑定主service
+        // 注册自定义动态广播消息。根据Action识别广播
+        IntentFilter filter_dynamic = new IntentFilter();
+        filter_dynamic.addAction("com.suntrans.beijing.RECEIVE");  //为IntentFilter添加Action，接收的Action与发送的Action相同时才会出发onReceive
+
+        registerReceiver(broadcastreceiver, filter_dynamic);    //动态注册broadcast receiver
         StatusBarCompat.compat(this,Color.TRANSPARENT);//设置状态栏为透明颜色
         setContentView(getLayoutId());
         //初始化控件
@@ -54,22 +62,34 @@ public abstract  class BaseActivity extends RxAppCompatActivity {
         initData();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
     @Override
-    protected void onPause() {
+    protected void onDestroy() {
         LogUtil.i("解除绑定成功");
         unbindService(con);   //解除Service的绑定
-        super.onPause();
+        unregisterReceiver(broadcastreceiver);  //注销广播接收者
+        super.onDestroy();
     }
 
     public abstract void initViews(Bundle savedInstanceState);
     public abstract void initToolBar();
     public abstract int getLayoutId();
     public abstract void initData();
+
+    //新建广播接收器，接收服务器的数据并解析，
+    protected BroadcastReceiver broadcastreceiver=new BroadcastReceiver() {
+        @Override
+        public void onReceive (Context context, Intent intent){
+            parseData(context,intent);
+        }
+    };//广播接收器
+
+    /**
+     * 解析数据
+     * @param context
+     * @param intent
+     */
+    protected abstract void parseData(Context context, Intent intent);
 
 
 }

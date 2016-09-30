@@ -187,9 +187,7 @@ public class RoadBulb_Activity extends AppCompatActivity{
         isRefresh=false;//取消刷新
         unregisterReceiver(broadcastreceiver);  //注销广播接收者
         unbindService(con);   //解除Service的绑定
-//        if (rxsub.isUnsubscribed()){
-//            rxsub.unsubscribe();
-//        }
+
         super.onDestroy();
     }
 

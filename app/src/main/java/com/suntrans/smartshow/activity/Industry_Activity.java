@@ -1,5 +1,7 @@
 package com.suntrans.smartshow.activity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
@@ -37,6 +39,11 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
     @Override
     public void initData() {
             getSupportFragmentManager().beginTransaction().replace(R.id.fl_content,new IndustryControlFragment()).commit();
+
+    }
+
+    @Override
+    protected void parseData(Context context, Intent intent) {
 
     }
 

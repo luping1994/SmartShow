@@ -1,11 +1,11 @@
 package com.suntrans.smartshow.fragment;
 
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.widget.SeekBar;
-import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.Convert.ParseSixSensor;
@@ -13,7 +13,6 @@ import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.activity.Smartroom_Activity;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.adapter.RoomConditionAdapter;
-import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.base.BaseFragment;
 import com.suntrans.smartshow.bean.SixSensor;
 import com.suntrans.smartshow.utils.LogUtil;
@@ -25,6 +24,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
+
+import static android.R.attr.order;
 
 /**
  * 智能家居页面中第二个Fragment,显示第六感的状态信息
@@ -41,17 +43,50 @@ public class RoomConditionFragment extends BaseFragment {
     private String ipAddress;//ip地址
     int port=8000;//端口号
     String addr ="0001";
+    Handler handler = new Handler();
     private static boolean isRuning=true;
     private static boolean isRefresh = true;//是否刷新
     @Override
     public int getLayoutId() {
         return R.layout.roomcondition_fragment;
     }
+    public Handler handler1 = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Map<String, Object> map = (Map<String, Object>) msg.obj;
+            byte[] bytes = (byte[]) (map.get("data"));
+            String s = Converts.Bytes2HexString(bytes);
+            s = s.replace(" ", ""); //去掉空格
+            String[] single_str = s.split("0d0a");
+            String result = single_str[0] + "0d0a";
+            LogUtil.i("Fuck you!收到结果为==>" + result);
+            SixSensor parseData = ParseSixSensor.parseData(result);
+            if (parseData==null){
+                return;
+            }
+            data.setPm1(parseData.getPm1());
+            data.setPm10(parseData.getPm10());
+            data.setPm25(parseData.getPm25());
+            data.setArofene(parseData.getArofene());
+            data.setSmoke(parseData.getSmoke());
+            data.setTmp(parseData.getTmp());
+            data.setHumidity(parseData.getHumidity());
+            data.setAtm(parseData.getAtm());
+            data.setStaff(parseData.getStaff());
+            data.setLight(parseData.getLight());
+            data.setXdegree(parseData.getXdegree());
+            data.setYdegree(parseData.getYdegree());
+            data.setZdegree(parseData.getZdegree());
+            refreshLayout.setRefreshing(false);
+            adapter.notifyDataSetChanged();
 
+        }
+    };
     @Override
     public void initViews() {
         data =  new SixSensor();
-        connectToServer();
+//        connectToServer();
         refreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.refreshlayout);
         recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);
         LinearLayoutManager manager = new LinearLayoutManager(getActivity());
@@ -100,14 +135,13 @@ public class RoomConditionFragment extends BaseFragment {
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
+                refreshLayout.setRefreshing(true);
                 getAllParameter();
-            }
-        });
-        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                String order="ab68"+addr+"f003 0100 0011";
-                sendOrder(order);
+                try {
+                    getAllParameter();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -119,137 +153,37 @@ public class RoomConditionFragment extends BaseFragment {
                 },2000);
             }
         });
-    }
-    Handler handler = new Handler();
-    /**
-     * 发送命令
-     * @param order
-     */
-    private void sendOrder(final String order) {
-        if (client!=null)
-            if (!client.isOutputShutdown()){
-                new Thread(){
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                String order="ab68"+addr+"f003 0100 0011";
+                ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order,4);
+                handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        String order1 = order.replace(" ","");
-                        byte[] bt=null;
-                        bt =Converts.HexString2Bytes(order1);
-                        String  string =  order1+Converts.GetCRC(bt, 4, bt.length)+"0d0a";
-                        byte[] bt1 = Converts.HexString2Bytes(string);
-                        try {
-                            out.write(bt1);
-                            out.flush();
-                            LogUtil.i("命令已发送==>"+string);/////////////////////
-                        } catch (IOException e) {
-                            //尝试重新建立连接
-                            try {
-                                client = new Socket(ipAddress,port);
-                                in = new DataInputStream(client.getInputStream());
-                                out= new DataOutputStream(client.getOutputStream());
-                                sendOrder(order);
-                            } catch (IOException e1) {
-                                e1.printStackTrace();
-                            }
-                            e.printStackTrace();
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                            UiUtils.showToast(UiUtils.getContext(),"刷新失败，请重试！");
                         }
                     }
-                }.start();
+                },2000);
             }
-
-
-    }
-
-    /**
-     * 连接到服务器
-     */
-    private void connectToServer() {
-        ipAddress = BaseApplication.getSharedPreferences().getString("ipAddress","192.168.1.235");
-        LogUtil.i("ipAddress=====>"+ipAddress);
-        new Thread(){
+        });
+        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
             @Override
             public void run() {
-                if (client==null){
+                while (isRefresh){
+                    getAllParameter();
                     try {
-                        client = new Socket(ipAddress,port);
-                        out  = new DataOutputStream(client.getOutputStream());
-                        in = new DataInputStream(client.getInputStream());
-                        LogUtil.i("client=========>>连接成功！");
-                    } catch (IOException e) {
-                        UiUtils.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                UiUtils.showToast(UiUtils.getContext(),"连接服务器失败");
-                            }
-                        });
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                new TcpServerThread().start();
             }
-        }.start();
+        });
     }
 
-    /**
-     * 收消息进程
-     */
-    class TcpServerThread extends Thread{
-        public void run() {
-            LogUtil.i("正在准备收消息中...");
-            try {
-                byte[] buf = new byte[100];
-                int len = 0;
-
-                while (client!=null){
-                    if (!client.isClosed()) {
-                        if (client.isConnected()) {
-                            if (!client.isInputShutdown()) {
-                                while ((len = in.read(buf)) != -1) {
-                                    String s = "";                       //保存命令的十六进制字符串
-                                    for (int i = 0; i < len; i++) {
-                                        String s1 = Integer.toHexString((buf[i] + 256) % 256);   //byte转换成十六进制字符串(先把byte转换成0-255之间的非负数，因为java中的数据都是带符号的)
-                                        if (s1.length() == 1)
-                                            s1 = "0" + s1;
-                                        s = s + s1;
-                                    }
-                                    s = s.replace(" ", ""); //去掉空格
-                                    String[] single_str = s.split("0d0a");
-                                    String result = single_str[0] + "0d0a";
-                                    LogUtil.i("Fuck you!收到结果为==>" + result);
-                                    SixSensor parseData = ParseSixSensor.parseData(result);
-                                    data.setPm1(parseData.getPm1());
-                                    data.setPm10(parseData.getPm10());
-                                    data.setPm25(parseData.getPm25());
-                                    data.setArofene(parseData.getArofene());
-                                    data.setSmoke(parseData.getSmoke());
-                                    data.setTmp(parseData.getTmp());
-                                    data.setHumidity(parseData.getHumidity());
-                                    data.setAtm(parseData.getAtm());
-                                    data.setStaff(parseData.getStaff());
-                                    data.setLight(parseData.getLight());
-                                    data.setXdegree(parseData.getXdegree());
-                                    data.setYdegree(parseData.getYdegree());
-                                    data.setZdegree(parseData.getZdegree());
-                                    if (adapter != null) {
-                                        UiUtils.runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                refreshLayout.setRefreshing(false);
-                                                adapter.notifyDataSetChanged();
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-    }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
@@ -281,16 +215,23 @@ public class RoomConditionFragment extends BaseFragment {
 
     @Override
     protected void parseObtainedMsg(byte[] bytes) {
-        LogUtil.e("RoomConditionFragment收到拉="+bytes.toString());
     }
     public void  getAllParameter(){
+        boolean run = true;
         String order="ab68"+addr+"f003 0100 0011";
-        sendOrder(order);
+        while (run){
+            if (((Smartroom_Activity)getActivity()).binder!=null){
+                ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order,4);
+
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        sendOrder("ab68"+addr+"f003 0200 0006");
+                        ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor("ab68"+addr+"f003 0200 0006",4);
                     }
                 },500);
+            }
+            run=false;
+        }
+
     }
 }

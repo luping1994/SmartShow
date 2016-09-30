@@ -31,30 +31,30 @@ import java.net.Socket;
  *  主串口服务器service，与服务器连接，监听服务器发送的消息，并广播。在用户登录成功时启动
  */
 public class MainService1 extends Service {
-    public Socket client=null;    //保持TCP连接的socket
-  //  private String serverip="192.168.1.235";
-   // public CalendarContract.Instances instances;
-//    public String serverip="192.168.1.47";
-  public String serverip="192.168.1.213";     //服务器IP
+    public Socket client=null;    //保持TCP连接的串口服务器ip socket
+    public String serverip="192.168.1.213";     //服务器IP
     public int port=8000;    //服务器端口
-//    public int port=2000;  //服务器端口
-    private String Addr="0001";    //第六感官的地址，从0000到ffff。跟用户名相对应
     private IBinder binder;
     private String SerialNumber;   //手机唯一标识
     private ConnectivityManager mConnectivityManager;
     private NetworkInfo netInfo;
     public static int SWITCH=2;      //开关代号
-    public static int THREEPHASE=3;  //三相电表代号
     public static int SIXSENSOR=4;   //第六感代号
+
+    public Socket sixClient=null;    //保持TCP连接的第六感socket
+    public String SixSensorip="192.168.1.235";     //服务器IP
+    public int sixPort=8000;    //第六感端口
+    private String Addr="0001";    //第六感官的地址，从0000到ffff。跟用户名相对应
+
+    boolean IsInnerNet = true;//是否是内网
 
     @Override   //当activity与service绑定的时候会调用此方法
     public IBinder onBind(Intent intent) {
         Log.v("Service", "ServiceDemo onBind");
-        SharedPreferences sharedPreferences= getSharedPreferences("data", Activity.MODE_PRIVATE);
-//        serverip =sharedPreferences.getString("serverip", "-1");   //读取服务器ip，若没有则是-1
-//        port= Integer.valueOf(sharedPreferences.getString("port", "8086"));
 
-        Log.i("Intenet", "serverip==>" + serverip);
+
+        Log.i("Intenet", "串口ip==>" + serverip);
+        LogUtil.i("Intenet", "第六感ip==>" + SixSensorip);
         if(client==null)   //如果client为空，则建立连接
             new Thread(){      //不能在主线程中访问网络，所以要新建线程
                 public void run(){   //新建线程连接服务器，不占用主线程
@@ -84,17 +84,57 @@ public class MainService1 extends Service {
                             out.flush();
                             //out.close();   //关闭输出流
                         }
-
                     }
                     catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                         Log.i("Order", "出错：" + e.toString());
-                     //   Log.i("Order", SerialNumber==null?"null":SerialNumber);
                     }
 
                 }
             }.start();
+
+        if(sixClient==null)   //如果client为空，则建立连接
+            new Thread(){      //不能在主线程中访问网络，所以要新建线程
+                public void run(){   //新建线程连接服务器，不占用主线程
+                    try
+                    {
+                        //获取服务器ip
+//                        final InetAddress serverAddr = InetAddress.getByName(serverip);// TCPServer.SERVERIP
+                        //定义socketaddress
+                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, port);
+                        sixClient = new Socket(SixSensorip, sixPort);   //新建TCP连接
+                        if (IsInnerNet){
+                            new TCPServerThread1().start();    //开启新的线程接收数据
+                        }
+                        //client.connect(my_sockaddr,5000);	  //第二个参数是timeout
+                        Thread.sleep(100);
+                        DataOutputStream out1=new DataOutputStream(client.getOutputStream());
+                        // 把用户输入的内容发送给server
+                        //String toServer = "ab68 F006 0500 000a 14 0001 0002 0003 0004 0005 0006 0007 0008 0009 000a";    //查询开关所有通道的状态
+                        String toServer="ab70 "+SerialNumber;  //发送手机地址
+                        toServer.replace(" ","");    //去掉空格
+                        byte[] bt=null;
+                        bt= Converts.HexString2Bytes(toServer);
+                        String str=toServer+Converts.GetCRC(bt, 2, bt.length);   //添加校验码
+                        Log.i("Order",str);
+                        byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
+                        if(!sixClient.isClosed())
+                        {
+                            out1.write(bt1);
+                            out1.flush();
+                            //out.close();   //关闭输出流
+                        }
+                    }
+                    catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                        Log.i("Order", "出错：" + e.toString());
+                    }
+
+                }
+            }.start();
+
         binder=new ibinder(){
             @Override
             public boolean sendOrder(final String order, final int dev){   //重写发送命令的方法
@@ -117,10 +157,12 @@ public class MainService1 extends Service {
                                 str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
                             else if (dev==3)//电表
                                 str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                            else if (dev==9)//智能家居这边的电表
+                                str ="f2"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
                             else if (dev==6)//水表
                                 str = "f3"+toServer+"16";
                             else if (dev==5)//氙气灯
-                                str =toServer;
+                                str ="f5"+toServer;
                             else if (dev==7)
                                 str = toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
                             else if (dev==8)//三相电表
@@ -175,16 +217,18 @@ public class MainService1 extends Service {
                                 toServer=toServer.replace(" ", "");    //去掉空格
                                 bt = null;
                                 bt = Converts.HexString2Bytes(toServer);
-                                if(dev==SWITCH||dev==SIXSENSOR){
+                                if(dev==SWITCH||dev==SIXSENSOR){//路灯
                                     str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
                                     LogUtil.i("service发送命令：="+str);
                                 } else if (dev==3)//电表
                                     str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                else if (dev==9)//智能家居这边的电表
+                                    str ="f2"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
                                 else if (dev==6)//水表
                                     str = "f3"+toServer+"16";
                                 else if (dev==5)//氙气灯
-                                    str =toServer;
-                                else if (dev==7)//路灯
+                                    str ="f5"+toServer;
+                                else if (dev==7)
                                     str = toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
                                 else if (dev==8)//三相电表
                                     str ="f8"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
@@ -204,7 +248,97 @@ public class MainService1 extends Service {
                 }.start();
                 return true;
             }
+
+            @Override
+            public boolean sendOrder2Sixsenor(final String order, final int dev) {
+                new Thread()   //新建子线程，发送命令
+                {
+
+                    public void run(){
+                        DataOutputStream out;
+                        try
+                        {
+
+                            out = new DataOutputStream(sixClient.getOutputStream());
+                            String toServer = order;    //要发送到服务器的指令，添加包头和第六关关地址(这两项不进行校验)
+                            toServer=toServer.replace(" ","");    //去掉空格
+                            byte[] bt=null;
+                            bt=Converts.HexString2Bytes(toServer);
+                            String str="";
+                            if(dev==SIXSENSOR)//第六感
+                                str= toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                            Log.i("Order","发送数据："+str);
+                            byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
+                            if(!sixClient.isClosed())
+                                if(sixClient.isConnected())
+                                    if(!sixClient.isOutputShutdown())
+                                    {
+                                        out.write(bt1);
+                                        out.flush();
+                                    }
+                        }
+                        catch (Exception e) {			// 发送出错，证明TCP断开了连接，重新建立连接
+                            try
+                            {
+
+                                if (sixClient != null)
+                                {
+                                    Log.i("Info", "isConnected==>"+ String.valueOf(sixClient.isConnected()));
+                                    Log.i("Info", "isoutputShutdown==>" + String.valueOf(sixClient.isOutputShutdown()));
+                                    Log.i("Info", "isinputshutdowm==>" + String.valueOf(sixClient.isInputShutdown()));
+                                    try {
+                                        sixClient.shutdownInput();
+                                        sixClient.shutdownOutput();
+                                        sixClient.close();
+                                    }
+                                    catch(Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+                                sixClient = null;
+                                InetAddress serverAddr = InetAddress.getByName(SixSensorip);// TCPServer.SERVERIP
+                                sixClient = new Socket(serverAddr, sixPort);   //新建TCP连接
+                                new TCPServerThread().start();
+                                out = new DataOutputStream(sixClient.getOutputStream());
+                                Thread.sleep(100);
+                                String toServer = "ab70 " + SerialNumber;  //发送手机地址，发送后手机才能接收到服务器的数据
+                                toServer.replace(" ", "");    //去掉空格
+                                byte[] bt = null;
+                                bt = Converts.HexString2Bytes(toServer);
+                                String str = toServer + Converts.GetCRC(bt, 2, bt.length);   //添加校验码
+                                byte[] bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
+                                if (!sixClient.isClosed())
+                                {
+                                    out.write(bt1);
+                                    out.flush();
+                                }
+                                Thread.sleep(100);
+                                toServer =  order;    //指令，添加包头和第六感官地址
+                                toServer=toServer.replace(" ", "");    //去掉空格
+                                bt = null;
+                                bt = Converts.HexString2Bytes(toServer);
+                                if(dev==SIXSENSOR){
+                                    str= toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                    LogUtil.i("service发送命令：="+str);
+                                }
+                                LogUtil.i("service发送命令：="+str);
+                                bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
+                                if (!sixClient.isClosed()) {
+                                    out.write(bt1);
+                                    out.flush();
+                                }
+                            }
+                            catch (Exception ee) {
+                                Log.i("Info", "client重启出错" + ee.toString());
+                            }
+
+                        }
+                    }
+                }.start();
+                return true;
+            }
         };   //重写发送命令方法
+
         return binder;   //如果这边不返回一个IBinder的接口实例，那么ServiceConnection中的onServiceConnected就不会被调用
               //那么bind所具有的传递数据的功能也就体现不出来。返回值在onServiceConnected中的第二个参数
 
@@ -213,17 +347,12 @@ public class MainService1 extends Service {
     @Override   //只调用一次
     public void onCreate() {
         Log.v("Service", "ServiceDemo onCreate");
-      //  SerialNumber = android.os.Build.SERIAL;   //获取唯一标识
-//        if(SerialNumber!=null)
-//            SerialNumber=SerialNumber.length()>3?SerialNumber.substring(SerialNumber.length()-4,SerialNumber.length()):"0000";
-//        else
-//            SerialNumber="0000";
+
         SerialNumber = "0001";
         Log.i("Internet", "网络状态：" + (IsNetWork() ? "可用" : "不可用"));   //判断网络状态,打开wifi显示可用，关闭wifi显示不可用。但是不确定能不能联网
         IntentFilter mFilter = new IntentFilter();
         mFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(myNetReceiver, mFilter);   //注册接收网络连接状态改变广播接收器
-        // Log.v("Service", SerialNumber == null ? "null" : SerialNumber);
         super.onCreate();
     }
 
@@ -264,6 +393,17 @@ public class MainService1 extends Service {
             }
 
         }
+        if(sixClient!=null) {
+            try {
+                sixClient.shutdownInput();
+                sixClient.shutdownOutput();
+                sixClient.close();     //关闭与服务器的tcp连接
+                sixClient = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
         super.onDestroy();   //调用父类onDestroy方法释放资源
     }
 
@@ -272,7 +412,6 @@ public class MainService1 extends Service {
 
         public void run()
         {
-
             byte[] buffer = new byte[1024];
             final StringBuilder sb = new StringBuilder();
             try {
@@ -284,7 +423,71 @@ public class MainService1 extends Service {
                     if (!client.isClosed()) {
                         if (client.isConnected()) {
                             if (!client.isInputShutdown()) {
-                                byte[] content=new byte[100];
+                                byte[] content=new byte[1024];
+                                int count=0;   //记录接收数据数组的长度
+                                while((count=ins.read(content)) !=-1) {     //读取数据 ，存放到缓存区content中
+
+//                                    Map<String,Object> map=new HashMap<String,Object>();   //新建map存放要传递给主线程的数据
+//                                    map.put("data",content);    //客户端发回的数据
+//                                    Message msg=new Message();
+//                                    msg.what=count;   //数组有效数据长度
+//                                    msg.obj=map;  //接收到的数据数组
+//                                    handler1.sendMessage(msg);
+                                    String s = "";                       //保存命令的十六进制字符串
+                                    for (int i = 0; i < count; i++) {
+                                        String s1 = Integer.toHexString((content[i] + 256) % 256);   //byte转换成十六进制字符串(先把byte转换成0-255之间的非负数，因为java中的数据都是带符号的)
+                                        if (s1.length() == 1)
+                                            s1 = "0" + s1;
+                                        s = s + s1;
+                                    }
+                                    //   String crc=Converts.GetCRC(a, 2, msg.what-2-2);    //获取返回数据的校验码，倒数第3、4位是验证码，倒数第1、2位是包尾0d0a
+                                    s = s.replace(" ", ""); //去掉空格
+                                    String[] single_str=s.split("0d0a");   //防止多条命令重叠，对命令按照包尾0d0a进行分解，逐条广播
+//                                    for(String str:single_str)
+//                                    {
+                                    String str = single_str[0];
+                                        //电表通讯协议中包尾是16，不是0d0a，此处加上0d0a不影响电表数据的解析，因为解析的时候没有计算校验
+                                        byte[] tem=Converts.HexString2Bytes(str+"0d0a");   //转换成byte数组
+                                        if(tem.length>=14) {
+                                            Intent intent = new Intent();
+                                            intent.setAction("com.suntrans.beijing.RECEIVE");
+                                            intent.putExtra("ContentNum", tem.length);   //数组长度
+                                            intent.putExtra("Content", tem);   //命令内容数组
+                                            sendBroadcast(intent);   //发送广播，通知各个activity
+                                        }
+                                        Log.i("Order", "收到数据：" + str+"0d0a");
+//                                    }
+
+
+                                }
+                            }
+                        }
+                    }
+                }
+                Log.i("Info", "TCP接收监听退出");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    //第六感接收进程，外网模式不应启动
+    public class TCPServerThread1 extends Thread   //监听服务器发回的信息
+    {
+
+        public void run()
+        {
+            byte[] buffer = new byte[1024];
+            final StringBuilder sb = new StringBuilder();
+            try {
+                // 接收服务器信息       定义输入流
+                InputStream in=sixClient.getInputStream();
+                DataInputStream ins = new DataInputStream(in);
+                while (sixClient!=null) {
+                    //content=new byte[1024];
+                    if (!sixClient.isClosed()) {
+                        if (sixClient.isConnected()) {
+                            if (!sixClient.isInputShutdown()) {
+                                byte[] content=new byte[1024];
                                 int count=0;   //记录接收数据数组的长度
                                 while((count=ins.read(content)) !=-1) {     //读取数据 ，存放到缓存区content中
 
@@ -339,6 +542,16 @@ public class MainService1 extends Service {
          * @return  发送成功返回true，失败返回false
          */
         public boolean sendOrder(String order, int dev){
+            return true;
+        }
+
+        /**
+         * 发送命令到第六感服务器
+         * @param order
+         * @param dev
+         * @return
+         */
+        public boolean sendOrder2Sixsenor(String order, int dev){
             return true;
         }
     }

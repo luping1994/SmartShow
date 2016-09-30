@@ -58,7 +58,7 @@
                 android:text="一"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                android:background="@color/green"/>
+                android:background="@drawable/bg_btn_state"/>
             <TextView
                 android:layout_width="5dp"
                 android:layout_height="fill_parent" />
@@ -71,7 +71,7 @@
                 android:text="十"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                android:background="@color/green"/>
+                android:background="@drawable/bg_btn_state"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

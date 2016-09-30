@@ -1,5 +1,6 @@
 package com.suntrans.smartshow.activity;
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -26,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
@@ -37,11 +40,15 @@ import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static android.R.attr.id;
+import static android.R.attr.order;
 import static android.media.CamcorderProfile.get;
+import static com.suntrans.smartshow.R.layout.progressdialog;
+import static com.suntrans.smartshow.R.layout.smartroom_detail_activity;
 
 
 /**
@@ -62,7 +69,8 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
     private  byte[] bits={(byte)0x01,(byte)0x02,(byte)0x04,(byte)0x08,(byte)0x10,(byte)0x20,(byte)0x40,(byte)0x80};     //从1到8只有一位是1，用于按位与计算，获取某一位的值
     private ArrayList<Map<String, String>> data = new ArrayList<>();//存储各个通道的名称和当前状态
     private  SmartHomeService.ibinder binder;  //用于Activity与Service通信
-
+    private ProgressDialog progressdialog;
+    private String which;
     private int area;
     private ServiceConnection con = new ServiceConnection() {
         //绑定服务成功后，调用此方法，获取返回的IBinder对象，可以用来调用Service中的方法
@@ -92,7 +100,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         registerReceiver(broadcastreceiver, filter_dynamic);    //动态注册broadcast receiver
 
         StatusBarCompat.compat(this, Color.TRANSPARENT);//设置状态栏为透明颜色
-        setContentView(R.layout.smartroom_detail_activity);
+        setContentView(smartroom_detail_activity);
         //初始化控件
         initViews(savedInstanceState);
         //初始化ToolBar
@@ -145,40 +153,51 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             case 1:
                 Map<String, String> map5 = new HashMap<>();
                 map5.put("Name", "餐厅灯");
+                map5.put("state","0");
                 map5.put("Image", String.valueOf(R.drawable.ic_wall_off));
                 map5.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map5);
 
                 Map<String, String> map6 = new HashMap<>();
                 map6.put("Name", "冰箱");
+                map6.put("state","0");
                 map6.put("Image", String.valueOf(R.drawable.ic_binxiang_off));
                 map6.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map6);
 
                 Map<String, String> map7 = new HashMap<>();
+                map7.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map7.put("state","0");
                 map7.put("Name", "餐厅插座");
                 map7.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
-                map7.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 data.add(map7);
                 break;
             case 2:
                 Map<String, String> map8 = new HashMap<>();
+                map8.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map8.put("state","0");
                 map8.put("Name", "吸油烟机");
                 map8.put("Image", String.valueOf(R.drawable.ic_smoke_off));
                 data.add(map8);
 
                 Map<String, String> map9 = new HashMap<>();
+                map9.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map9.put("state","0");
                 map9.put("Name", "微波炉");
                 map9.put("Image", String.valueOf(R.drawable.ic_weibolu_off));
                 data.add(map9);
 
                 Map<String, String> map10 = new HashMap<>();
+                map10.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map10.put("state","0");
                 map10.put("Name", "厨房灯");
                 map10.put("Image", String.valueOf(R.drawable.ic_bulb_off));
                 data.add(map10);
                 break;
             case 3:
                 Map<String, String> map11 = new HashMap<>();
+                map11.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map11.put("state","0");
                 map11.put("Name", "书房灯");
                 map11.put("Image", String.valueOf(R.drawable.ic_bulb_off));
                 data.add(map11);
@@ -186,86 +205,118 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 Map<String, String> map12 = new HashMap<>();
                 map12.put("Name", "书房空调");
                 map12.put("Image", String.valueOf(R.drawable.ic_weibolu_off));
+                map12.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map12.put("state","0");
                 data.add(map12);
 
                 Map<String, String> map13 = new HashMap<>();
                 map13.put("Name", "电脑");
                 map13.put("Image", String.valueOf(R.drawable.ic_computer_off));
+                map13.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map13.put("state","0");
                 data.add(map13);
                 break;
             case 4:
                 Map<String, String> map14 = new HashMap<>();
                 map14.put("Name", "卫生间灯");
                 map14.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                map14.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map14.put("state","0");
                 data.add(map14);
 
                 Map<String, String> map15 = new HashMap<>();
                 map15.put("Name", "热水器");
                 map15.put("Image", String.valueOf(R.drawable.ic_hotwater_off));
+                map15.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map15.put("state","0");
                 data.add(map15);
 
                 Map<String, String> map16 = new HashMap<>();
                 map16.put("Name", "卫生间插座");
                 map16.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map16.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map16.put("state","0");
                 data.add(map16);
                 break;
             case 5:
                 Map<String, String> map17 = new HashMap<>();
                 map17.put("Name", "主卧壁灯");
                 map17.put("Image", String.valueOf(R.drawable.ic_wall_off));
+                map17.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map17.put("state","0");
                 data.add(map17);
 
                 Map<String, String> map18 = new HashMap<>();
                 map18.put("Name", "主卧阳台灯");
                 map18.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                map18.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map18.put("state","0");
                 data.add(map18);
 
                 Map<String, String> map19 = new HashMap<>();
                 map19.put("Name", "主卧灯");
                 map19.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map19.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map19.put("state","0");
                 data.add(map19);
 
                 Map<String, String> map20 = new HashMap<>();
                 map20.put("Name", "主卧空调");
                 map20.put("Image", String.valueOf(R.drawable.ic_kongtiao_off));
+                map20.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map20.put("state","0");
                 data.add(map20);
 
                 Map<String, String> map21 = new HashMap<>();
                 map21.put("Name", "主卧插座");
                 map21.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map21.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map21.put("state","0");
                 data.add(map21);
                 break;
             case 6:
                 Map<String, String> map22 = new HashMap<>();
                 map22.put("Name", "次卧插座");
                 map22.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map22.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map22.put("state","0");
                 data.add(map22);
 
                 Map<String, String> map23 = new HashMap<>();
                 map23.put("Name", "次卧空调");
                 map23.put("Image", String.valueOf(R.drawable.ic_kongtiao_off));
+                map23.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map23.put("state","0");
                 data.add(map23);
 
                 Map<String, String> map24 = new HashMap<>();
                 map24.put("Name", "次卧灯");
                 map24.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                map24.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map24.put("state","0");
                 data.add(map24);
 
                 Map<String, String> map25 = new HashMap<>();
                 map25.put("Name", "次卧壁灯");
                 map25.put("Image", String.valueOf(R.drawable.ic_wall_off));
+                map25.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map25.put("state","0");
                 data.add(map25);
                 break;
             case 7:
                 Map<String, String> map26 = new HashMap<>();
                 map26.put("Name", "走廊灯");
                 map26.put("Image", String.valueOf(R.drawable.ic_bulb_off));
+                map26.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map26.put("state","0");
                 data.add(map26);
                 break;
             case 8:
                 Map<String, String> map27 = new HashMap<>();
                 map27.put("Name", "洗衣机");
                 map27.put("Image", String.valueOf(R.drawable.ic_xiyiji_off));
+                map27.put("dot",String.valueOf(R.drawable.ic_dot_off));
+                map27.put("state","0");
                 data.add(map27);
                 break;
         }
@@ -381,10 +432,10 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             int idDot = Integer.valueOf(data.get(position).get("dot"));
             Bitmap bitmap = BitmapFactory.decodeResource(SmartRoomDetails_Activity.this.getResources(), id);
             Bitmap bitmapDot = BitmapFactory.decodeResource(SmartRoomDetails_Activity.this.getResources(), idDot);
-            bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
 
+            bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
             ((viewHolder1) holder).image.setImageBitmap(bitmap);
-//            ((viewHolder1) holder).dot.setImageBitmap(bitmapDot);
+            ((viewHolder1) holder).dot.setImageBitmap(bitmapDot);
             ((viewHolder1) holder).textView.setText(data.get(position).get("Name"));
             ((viewHolder1) holder).image.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -427,7 +478,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 super(view);
                 image = (ImageView) view.findViewById(R.id.iv);
                 textView = (TextView) view.findViewById(R.id.name);
-                dot = (ImageView) findViewById(R.id.dot);
+                dot = (ImageView)view.findViewById(R.id.dot);
             }
         }
 
@@ -458,17 +509,32 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
      * 获取不同房间的开关状态
      */
     private void getSwitchStateFromServer() {
-
+        String order;
         switch (area){
             case 0://客厅，只需获取00010001开关2，6，7，9通道的状态
-                String order = "aa68"+road_addr1+"03 0100"+"0007";
+            case 2://餐厅
+            case 6://次卧室
+            case 8://阳台洗衣机
+                order = "aa68"+road_addr1+"03 0100"+"0007";
                 binder.sendOrder(order,2);
                 break;
+            case 1://餐厅
+            case 4://卫生间
+                order = "aa68"+road_addr2+"03 0100"+"0007";
+                binder.sendOrder(order,2);
+                break;
+            case 3://书房
+            case 5://主卧室
+            case 7://走廊
+                order = "aa68"+road_addr3+"03 0100"+"0007";
+                binder.sendOrder(order,2);
+                break;
+
         }
     }
 
 
-    private String return_addr;//开关地址
+    private String return_addr;//命令返回的开关地址末位
     private String s;//收到的命令
     //新建广播接收器，接收服务器的数据并解析，
     protected BroadcastReceiver broadcastreceiver=new BroadcastReceiver() {
@@ -483,7 +549,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             s = Converts.Bytes2HexString(bytes);
             s = s.split("0d0a")[0] + "0d0a";
             if (s.length() > 20) {
-                return_addr = s.substring(11, 12);   //返回数据的开关地址末位
+                return_addr = s.substring(4, 12);   //返回数据的开关地址
                 System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:" + s);
                 byte a[] = Converts.HexString2Bytes(s);
                 if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
@@ -501,8 +567,12 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                         }
 
                         for (int i = 0; i < state1.size(); i++) {//更新状态到集合中
-                            if (return_addr.equals("1")){
+                            if (return_addr.equals("00010001")){
                                 state1.get(i).put("state", states[i]);
+                            }else if (return_addr.equals("00010002")){
+                                state2.get(i).put("state", states[i]);
+                            }else if (return_addr.equals("00010003")){
+                                state3.get(i).put("state",states[i]);
                             }
                         }
 
@@ -519,8 +589,12 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     {
                         if (state == 0) {
                             for (int i = 0; i < state1.size(); i++) {//更新状态到集合中
-                                if (return_addr.equals("1")){
+                                if (return_addr.equals("00010001")){
                                     state1.get(i).put("state", "0");
+                                }else if (return_addr.equals("00010002")){
+                                    state2.get(i).put("state", "0");
+                                }else if (TextUtils.equals(return_addr,road_addr3)){
+                                    state3.get(i).put("state", "0");
                                 }
                             }
                         }
@@ -530,18 +604,20 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 //                                    state2[k-1] = state+"";
                         for (int i = 0; i < state1.size(); i++) {
                             if (state1.get(i).get("position").equals(String.valueOf(k - 1))) {
-                                if (return_addr.equals("1")){
+                                if (return_addr.equals("00010001")){
                                     state1.get(i).put("state", state == 1 ? "1" : "0");
-                                    System.out.println("当前通道"+state1.get(i).get("state"));
+//                                    System.out.println("当前通道"+state1.get(i).get("state"));
+                                }else if (return_addr.equals("00010002")){
+                                    state2.get(i).put("state", state == 1 ? "1" : "0");
+                                    LogUtil.i("当前通道"+state1.get(i).get("state"));
+                                }else if (TextUtils.equals(return_addr,road_addr3)){
+                                    state3.get(i).put("state", state == 1 ? "1" : "0");
                                 }
                             }
                         }
                     }
                 }
-                if (adapter != null) {
-                    for (int i = 0; i < state1.size(); i++) {
-                        System.out.println(state1.get(i).get("state"));
-                    }
+
                     if (area==0){
                         //更新保存的状态
                          data.get(0).put("state",state1.get(1).get("state"));
@@ -561,13 +637,121 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                         data.get(3).put("dot",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
 
                     }else if (area==1){
+                        data.get(0).put("state",state2.get(1).get("state"));
+                        data.get(1).put("state",state2.get(2).get("state"));
+                        data.get(2).put("state",state2.get(7).get("state"));
 
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_wall_off:R.drawable.ic_wall_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_binxiang_off:R.drawable.ic_bingxiang_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_chazuo_off:R.drawable.ic_chazuo_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                    }else if (area==2){
+                        data.get(0).put("state",state2.get(0).get("state"));
+                        data.get(1).put("state",state2.get(3).get("state"));
+                        data.get(2).put("state",state2.get(4).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_smoke_off:R.drawable.ic_smoke_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_weibolu_off:R.drawable.ic_wobolu_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                    }else if (area==3){
+                        data.get(0).put("state",state3.get(5).get("state"));
+                        data.get(1).put("state",state3.get(6).get("state"));
+                        data.get(2).put("state",state3.get(8).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_kongtiao_off:R.drawable.ic_kongtiao_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_computer_off:R.drawable.ic_computer_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                    }else if (area==4){
+                        //更新状态
+                        data.get(0).put("state",state2.get(5).get("state"));
+                        data.get(1).put("state",state2.get(6).get("state"));
+                        data.get(2).put("state",state2.get(8).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_hotwater_off:R.drawable.ic_hotwater_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_chazuo_off:R.drawable.ic_computer_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                    }else if(area==5){
+                        //更新状态
+                        data.get(0).put("state",state3.get(0).get("state"));
+                        data.get(1).put("state",state3.get(1).get("state"));
+                        data.get(2).put("state",state3.get(2).get("state"));
+                        data.get(3).put("state",state3.get(3).get("state"));
+                        data.get(4).put("state",state3.get(7).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_wall_off:R.drawable.ic_wall_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+                        data.get(3).put("Image",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_kongtiao_off:R.drawable.ic_kongtiao_on));
+                        data.get(4).put("Image",String.valueOf((data.get(4).get("state").equals("0"))?R.drawable.ic_chazuo_off:R.drawable.ic_chazuo_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(3).put("dot",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(4).put("dot",String.valueOf((data.get(4).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+
+                    }else if (area==6){//侧卧室
+                        //更新状态
+                        data.get(0).put("state",state1.get(0).get("state"));
+                        data.get(1).put("state",state1.get(2).get("state"));
+                        data.get(2).put("state",state1.get(3).get("state"));
+                        data.get(3).put("state",state1.get(4).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_chazuo_off:R.drawable.ic_chazuo_on));
+                        data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_kongtiao_off:R.drawable.ic_kongtiao_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+                        data.get(3).put("Image",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_wall_off:R.drawable.ic_wall_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(2).put("dot",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                        data.get(3).put("dot",String.valueOf((data.get(3).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                    }else if (area==7){
+                        data.get(0).put("state",state3.get(4).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
+                    }else if (area==8){
+                        data.get(0).put("state",state1.get(7).get("state"));
+
+                        //更新保存的应显示的图片
+                        data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_xiyiji_off:R.drawable.ic_xiyiji_on));
+
+                        data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
                     }
+                //发送消息通知processbar dismiss
+                Message msg3 = new Message();
+                msg3.what=0;
+                handler2.sendMessage(msg3);
+                if (adapter != null) {
                     UiUtils.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             refreshLayout.setRefreshing(false);
-                            UiUtils.showToast(UiUtils.getContext(), "刷新成功！");
+                            UiUtils.showToast(UiUtils.getContext(), "sucess！");
                             adapter.notifyDataSetChanged();
                         }
                     });
@@ -581,68 +765,278 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
 
     private void parseClick(View v, int position) {
+        Message msg = new Message();
+        msg.what=1;
+        handler2.sendMessage(msg);
+
+        Message msg2 = new Message();
+        msg2.what=2;
+        handler2.sendMessage(msg2);
+
+        time = new Date().getTime();
         if (area==0){
             switch (position){//客厅对应1号开关2，6，7，8通道
                 case 0:
                     if(data.get(0).get("state").equals("0")){
-                        binder.sendOrder("aa68 00010001 06 0302 0001",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0302 0001",2);
                     }else {
-                        binder.sendOrder("aa68 00010001 06 0302 0000",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0302 0000",2);
                     }
                     break;
                 case 1:
                     if(data.get(1).get("state").equals("0")){
-                        binder.sendOrder("aa68 00010001 06 0306 0001",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0306 0001",2);
                     }else {
-                        binder.sendOrder("aa68 00010001 06 0306 0000",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0306 0000",2);
                     }
                     break;
                 case 2:
                     if(data.get(2).get("state").equals("0")){
-                        binder.sendOrder("aa68 00010001 06 0307 0001",2);
+                        binder.sendOrder("aa68 "+road_addr1+"06 0307 0001",2);
                     }else {
-                        binder.sendOrder("aa68 00010001 06 0307 0000",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0307 0000",2);
                     }
                     break;
                 case 3:
                     if(data.get(3).get("state").equals("0")){
-                        binder.sendOrder("aa68 00010001 06 0309 0001",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0309 0001",2);
                     }else {
-                        binder.sendOrder("aa68 00010001 06 0309 0000",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0309 0000",2);
                     }
                     break;
             }
         }else if (area==1){//餐厅
             switch (position){
                 case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0302 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2 +"06 0302 0000",2);
+                    }
                     break;
                 case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0303 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2+"06 0303 0000",2);
+                    }
                     break;
                 case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0308 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2 +"06 0308 0000",2);
+                    }
                     break;
             }
         }else if (area==2){//厨房
             switch (position){
                 case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0301 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2 +"06 0301 0000",2);
+                    }
                     break;
                 case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0304 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2+"06 0304 0000",2);
+                    }
                     break;
                 case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0305 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2 +"06 0305 0000",2);
+                    }
                     break;
             }
         }else if (area==3){//书房
-
+            switch (position){
+                case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0306 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0306 0000",2);
+                    }
+                    break;
+                case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0307 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0307 0000",2);
+                    }
+                    break;
+                case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0309 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0309 0000",2);
+                    }
+                    break;
+            }
         }else if (area==4){//卫生间
-
+            switch (position){
+                case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0306 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2+"06 0306 0000",2);
+                    }
+                    break;
+                case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0307 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2+"06 0307 0000",2);
+                    }
+                    break;
+                case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr2+"06 0309 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr2+"06 0309 0000",2);
+                    }
+                    break;
+            }
         }else if (area==5){//主卧室
-
+            switch (position){
+                case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0301 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0301 0000",2);
+                    }
+                    break;
+                case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0302 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0302 0000",2);
+                    }
+                    break;
+                case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0303 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0303 0000",2);
+                    }
+                    break;
+                case 3:
+                    if(data.get(3).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0304 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0304 0000",2);
+                    }
+                    break;
+                case 4:
+                    if(data.get(4).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr3+"06 0308 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0308 0000",2);
+                    }
+                    break;
+            }
         }else if (area==6){//次卧室
-
+            switch (position){
+                case 0:
+                    if(data.get(0).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr1+"06 0301 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr3+"06 0301 0000",2);
+                    }
+                    break;
+                case 1:
+                    if(data.get(1).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr1+"06 0303 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr1+"06 0303 0000",2);
+                    }
+                    break;
+                case 2:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr1+"06 0304 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr1+"06 0304 0000",2);
+                    }
+                    break;
+                case 3:
+                    if(data.get(2).get("state").equals("0")){
+                        binder.sendOrder("aa68" +road_addr1+"06 0305 0001",2);
+                    }else {
+                        binder.sendOrder("aa68"+road_addr1+"06 0305 0000",2);
+                    }
+                    break;
+            }
         }else if (area==7){//走廊
-
+            if (data.get(0).get("state").equals("0")){
+                binder.sendOrder("aa68"+road_addr3+"06 0305 0001",2);
+            }else {
+                binder.sendOrder("aa68"+road_addr3+"06 0305 0000",2);
+            }
         }else if (area==8){//阳台
-
+            if (data.get(0).get("state").equals("0")){
+                binder.sendOrder("aa68"+road_addr1+"06 0308 0001",2);
+            }else {
+                binder.sendOrder("aa68"+road_addr1+"06 0308 0000",2);
+            }
         }
     }
+
+
+
+    private long time;
+    private Handler handler2=new Handler()   //用来控制progressdialog的显示和销毁
+    {
+        public void handleMessage(Message msg)
+        {
+            super.handleMessage(msg);
+            if(msg.what==0)   //如果是要关闭progresedialog的显示（收到相应通道的反馈，则进行此操作）
+            {
+                if(progressdialog!= null)
+                {
+                    progressdialog.dismiss();
+                    progressdialog=null;
+                }
+                //which="100";
+            }
+            else if(msg.what==1)   //是要显示progressdialog
+            {
+                progressdialog = new ProgressDialog(SmartRoomDetails_Activity.this);    //初始化progressdialog
+                progressdialog.setCancelable(true);// 设置是否可以通过点击Back键取消
+                progressdialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条
+                progressdialog.setMessage("loading...");
+                progressdialog.show();
+                progressdialog.setContentView(R.layout.progressdialog);    //设置显示的内容
+            }
+            else if(msg.what==2)   //如果是要根据时间判断是否关闭progressdialog的显示，用于通讯条件不好，收不到反馈时
+            {
+                if(new Date().getTime()-time>=1900)
+                {
+                    if(progressdialog!= null)
+                    {
+                        progressdialog.dismiss();
+                        progressdialog=null;
+                    }
+                    if(!which.equals("100"))
+                    {
+                        which="100";
+                        Toast.makeText(SmartRoomDetails_Activity.this, "网络错误！", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+            }
+            else   //如果是要显示progressdialog
+            {
+                progressdialog = new ProgressDialog(SmartRoomDetails_Activity.this);    //初始化progressdialog
+                progressdialog.setCancelable(true);// 设置是否可以通过点击Back键取消
+                progressdialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条
+                progressdialog.show();
+                progressdialog.setContentView(R.layout.progressdialog);    //设置显示的内容
+            }
+        }
+    };
 }
 

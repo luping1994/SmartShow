@@ -54,8 +54,8 @@ public class IndustryState_Activity extends AppCompatActivity {
     private String title;//标题值
     private ArrayList<Map<String, String>> data = new ArrayList<>();
     private TextView textView;
-    private String date = "null";
-    private static boolean refresh = true;
+    private String date = "null";//刷新的时间
+    private  boolean refresh = true;
     Handler handler = new Handler();
     private mAdapter adapter;
     /**
@@ -141,17 +141,14 @@ public class IndustryState_Activity extends AppCompatActivity {
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
-                boolean refresh = true;
-                while (refresh){
                     if (binder!=null){
                         String order = "FE 68 09 01 00 12 14 20 68 1F 00";
                         binder.sendOrder(order,8);
                         refresh=false;
                     }
-                }
             }
         });
-        //新进线程刷新数据
+//        新进线程刷新数据
         ThreadManager.getInstance().createLongPool().execute(new Runnable() {
             @Override
             public void run() {

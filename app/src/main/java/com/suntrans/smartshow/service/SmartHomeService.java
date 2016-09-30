@@ -28,7 +28,7 @@ import java.net.Socket;
 
 /**
  * Create by 1111b on 2015/12/12.
- *  主service，与服务器连接，监听服务器发送的消息，并广播。在用户登录成功时启动
+ *  智能家居开关控制部分的service
  */
 public class SmartHomeService extends Service {
     public Socket client=null;    //保持TCP连接的socket

@@ -9,7 +9,7 @@ public class SingleMeter extends Device {
     private double Power;    //功率
     private double PowerRate;  //功率因数
     private double Eletricity;   //电表读数
-
+    private String time;//刷新的时间
     public String getRSAddrOpposite() {
         return RSAddrOpposite;
     }
@@ -79,4 +79,10 @@ public class SingleMeter extends Device {
     }
 
 
+    public String getTime() {
+        return time;
+    }
+    public void setTime(String time){
+        this.time = time;
+    }
 }

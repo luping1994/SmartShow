@@ -8,19 +8,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.activity.Fourmeters_Activity;
-import com.suntrans.smartshow.activity.Meter_Activity;
 import com.suntrans.smartshow.activity.SmartRoomDetails_Activity;
-import com.suntrans.smartshow.activity.SmartRoonDetails_Activity;
-import com.suntrans.smartshow.adapter.RecyclerViewDivider;
-import com.suntrans.smartshow.adapter.RoomConditionAdapter;
 import com.suntrans.smartshow.adapter.SmartControlAdapter;
 import com.suntrans.smartshow.base.BaseFragment;
-import com.suntrans.smartshow.bean.SixSensor;
 import com.suntrans.smartshow.bean.SmartSwitch;
-import com.suntrans.smartshow.utils.LogUtil;
-
-import java.text.BreakIterator;
 
 /**
  * 智能家居页面中第1个Fragment,显示第开关信息。

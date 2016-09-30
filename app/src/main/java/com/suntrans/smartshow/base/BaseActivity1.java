@@ -12,7 +12,6 @@ import com.suntrans.smartshow.utils.StatusBarCompat;
  * Created by Looney on 2016/8/9.
  */
 public abstract  class BaseActivity1 extends AppCompatActivity {
- ///用于绑定activity与service
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {

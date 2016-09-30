@@ -464,12 +464,54 @@ public class Meter_Activity extends AppCompatActivity {
         String s = Converts.Bytes2HexString(datas);         //保存命令的十六进制字符串
         Converts.Bytes2HexString(datas);
         s = s.replace(" ", ""); //去掉空格
-        if (!TextUtils.equals(s.substring(0,6),"f36820")){
+        if (!TextUtils.equals(s.substring(0,6),"F36820")){
             return;
         }
         s=s.substring(2,s.length());
-        String coldSum = s.substring(28,30);
-
+        LogUtil.i(s);
+        byte[] a = Converts.HexString2Bytes(s);
+        double coldSum = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[14]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[15]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[16]&0xff)}))*100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[17]&0xff)}))*10000;
+        double hotSum = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[19]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[20]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[21]&0xff)}))*100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[22]&0xff)}))*10000;
+        double hotRate = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[24]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[25]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[26]&0xff)}))*100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[27]&0xff)}))*10000;
+        double perFlow = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[29]&0xff)}))/10000
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[30]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[31]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[32]&0xff)}))*100;
+        double flowSum = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[34]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[35]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[36]&0xff)}))*100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[37]&0xff)}))*10000;
+        double temIn = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[39]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[40]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[41]&0xff)}))*100;
+        double temOut = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[42]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[43]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[44]&0xff)}))*100;
+        LogUtil.i("======>>"+coldSum+" kwh "+hotSum+"kwh");
+        data.get(0).put("Value",coldSum+"kWh");
+        data.get(1).put("Value",hotSum+"kWh");
+        data.get(2).put("Value",hotRate+" ");
+        data.get(3).put("Value",perFlow+"L/h");
+        data.get(4).put("Value",flowSum+" L");
+        data.get(5).put("Value",temIn+" ℃");
+        data.get(6).put("Value",temOut+" ℃");
+        SimpleDateFormat sdf=new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
+        date=sdf.format(new java.util.Date());
+        UiUtils.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
     /**
      * 解析气表数据
@@ -493,7 +535,6 @@ public class Meter_Activity extends AppCompatActivity {
         public void onReceive (Context context, Intent intent){
             int count = intent.getIntExtra("ContentNum", 0);   //byte数组的长度
             byte[] data = intent.getByteArrayExtra("Content");  //内容数组
-            LogUtil.i(Converts.Bytes2HexString(data));
             if (Meter_Type==1){
                 refreshLayout.setRefreshing(false);
                 parseSingleMeter(data);
@@ -501,10 +542,10 @@ public class Meter_Activity extends AppCompatActivity {
                 refreshLayout.setRefreshing(false);
                 parseSmartWater(data);
             }else if (Meter_Type==3){
-                refreshLayout.setTag(false);
+                refreshLayout.setRefreshing(false);
                 parseHot(data);
             }else {
-                refreshLayout.setTag(false);
+                refreshLayout.setRefreshing(false);
                 parseAir(data);
             }
 

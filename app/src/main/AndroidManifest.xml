@@ -34,7 +34,6 @@
         <activity android:name=".activity.IndustryState_Activity"/>
         <activity android:name=".activity.RoadBulb_Activity"/>
         <activity android:name=".activity.Flashlight_Activity"/>
-        <activity android:name=".activity.SmartRoonDetails_Activity"/>
         <activity android:name=".activity.SmartRoomDetails_Activity"/>
         <service android:name=".service.SmartHomeService"/>
     </application>

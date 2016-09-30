@@ -42,7 +42,8 @@ public class PowerInfoAdapter extends RecyclerView.Adapter {
         @Override
         public void onBindViewHolder (RecyclerView.ViewHolder holder,int position){
             if (holder instanceof viewHolder2){
-                ((viewHolder2)holder).value.setText("2016/9/26");
+                ((viewHolder2)holder).value.setText(
+                        data.getTime());
             }else {
                 ((viewHolder1)holder).setData(position);
             }
@@ -81,27 +82,27 @@ public class PowerInfoAdapter extends RecyclerView.Adapter {
                 case 1:
                     image.setImageResource(R.mipmap.ic_pm);
                     name.setText("用电量");
-                    value.setText("null");
+                    value.setText(data.getEletricity()+"kW·h");
                     break;
                 case 2:
                     image.setImageResource(R.mipmap.ic_pm);
                     name.setText("电压");
-                    value.setText("null");
+                    value.setText(data.getUValue()+"V");
                     break;
                 case 3:
                     image.setImageResource(R.mipmap.ic_pm);
                     name.setText("电流");
-                    value.setText("null");
+                    value.setText(data.getIValue()+"I");
                     break;
                 case 4:
                     image.setImageResource(R.drawable.ic_power);
                     name.setText("有功功率");
-                    value.setText("null");
+                    value.setText(data.getPower()+"W");
                     break;
                 case 5:
                     image.setImageResource(R.drawable.ic_power);
                     name.setText("功率因素");
-                    value.setText("null");
+                    value.setText(data.getPowerRate()+" ");
                     break;
                 default:
                     break;
