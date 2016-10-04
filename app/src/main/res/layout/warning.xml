@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="@drawable/bg_warning"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dip"
+        android:gravity="center"
+        android:layout_marginTop="15dip"
+        android:orientation="horizontal">
+        <ImageView
+            android:layout_width="50dip"
+            android:layout_height="50dip"
+            android:src="@drawable/ic_warning"
+            android:padding="8dip"/>
+        <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="50dip"
+        android:gravity="center"
+        android:text="报警！"
+        android:textSize="22sp"
+        android:textColor="@color/red"/>
+    </LinearLayout>t
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dip"
+        android:textColor="@color/black"
+        android:id="@+id/tx_warning"
+        android:textSize="18sp"
+        android:text="nullnull！"
+        android:gravity="center"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="45dip"
+        android:id="@+id/button"
+        android:text="关闭"
+        android:background="@color/transparent"
+        android:textSize="22sp"
+        android:textColor="@color/blue"
+        android:gravity="center"
+        android:layout_marginTop="15dip"
+        android:layout_marginBottom="15dip"/>
+</LinearLayout>

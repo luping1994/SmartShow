@@ -21,14 +21,14 @@ public class BaseApplication extends Application {
         mainTid=android.os.Process.myTid();
         mHandler=new Handler();
         boolean frist = getSharedPreferences().getBoolean("isFristCome",true);
+        //假如是第一次启动app则保存ip地址默认为内网ip
         if (frist){
             getSharedPreferences().edit().putBoolean("isFristCome",false).commit();
-        }else {
-            getSharedPreferences().edit().putString("sixIpAddress","192.168.1.235");
-            getSharedPreferences().edit().putInt("sixPort",8000);
+            getSharedPreferences().edit().putString("sixIpAddress","192.168.1.4").commit();
+            getSharedPreferences().edit().putInt("sixPort",2000).commit();
 
-            getSharedPreferences().edit().putString("chunkouIpAddress","192.168.1.213");
-            getSharedPreferences().edit().putInt("chunkouPort",8000);
+            getSharedPreferences().edit().putString("chunkouIpAddress","192.168.1.213").commit();
+            getSharedPreferences().edit().putInt("chunkouPort",8000).commit();
         }
     }
     public static SharedPreferences getSharedPreferences(){

@@ -117,6 +117,7 @@ public class Smartroom_Activity extends AppCompatActivity {
 
     public void initData() {
         pager.setAdapter(new Myadapter(getSupportFragmentManager()));
+        pager.setOffscreenPageLimit(1);//ViewPager缓存页数1
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {

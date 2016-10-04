@@ -73,6 +73,7 @@ public class IndustryState_Activity extends AppCompatActivity {
 
         }
     };
+    private String sanxiangAddr="09 01 00 12 14 20";//反向三相电表地址
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,7 +120,7 @@ public class IndustryState_Activity extends AppCompatActivity {
                         boolean refresh = true;
                         while (refresh){
                             if (binder!=null){
-                                String order = "FE 68 09 01 00 12 14 20 68 1F 00";
+                                String order = "FE 68"+sanxiangAddr+"68 1F 00";
                                 binder.sendOrder(order,8);
                                 refresh=false;
                             }

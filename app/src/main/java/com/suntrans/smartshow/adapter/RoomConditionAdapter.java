@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,19 +17,32 @@ import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.bean.SixSensor;
 import com.suntrans.smartshow.views.Switch;
 
+import java.util.ArrayList;
+import java.util.Map;
+
+import static android.R.attr.process;
+import static com.suntrans.smartshow.R.id.layout_arrow;
+
 /**
  * Created by Looney on 2016/9/26.
  */
 
 public class RoomConditionAdapter extends RecyclerView.Adapter {
+    private final Map<String, String> map;
     private Context context;
     private SixSensor data;
     private int Pwidth=0;  //屏幕宽度，单位是pixel
     private DisplayMetrics displayMetrics = new DisplayMetrics();
+    private ArrayList<Map<String, String>> data_air;
+    private ArrayList<Map<String, String>> data_room;
+    private ArrayList<Map<String, String>> data_posture;
 
-    public RoomConditionAdapter(Activity context, SixSensor data) {
+    public RoomConditionAdapter(Activity context, ArrayList<Map<String, String>> air,ArrayList<Map<String, String>> room ,ArrayList<Map<String, String>> posture,Map<String,String> map) {
         this.context = context;
-        this.data = data;
+        this.data_air = air;
+        this.data_room =room;
+        this.data_posture = posture;
+        this.map=map;
         context.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);//获取屏幕大小的信息
         Pwidth=displayMetrics.widthPixels;   //屏幕宽度,先锋的宽度是800px，小米2a的宽度是720px
     }
@@ -62,6 +76,7 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
             ((viewHolder1)holder).setData(position);
         }else if (holder instanceof  viewHolder3){
             ((viewHolder3)holder).setListener();
+            ((viewHolder3)holder).setData();
         }else
             ((viewHolder4)holder).setData(position);
 
@@ -109,85 +124,144 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
         }
 
         public void setData(int position) {
+            int progress;
             switch (position) {
                 case 2:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.bg_standard);
                     name.setText("PM1");
-                    value.setText(data==null?"null":data.getPm1()+"");
+                    value.setText(data_air.get(2).get("Value"));
+                    evaluate.setText(data_air.get(2).get("Evaluate"));
+                    progress =Integer.valueOf(data_air.get(2).get("Progress"));
+                    setPading(progress,layout_arrow,value);
                     break;
                 case 3:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.bg_standard);
                     name.setText("PM10");
-                    value.setText(data==null?"null":data.getPm10()+"");
+                    value.setText(data_air.get(3).get("Value"));
+                    evaluate.setText(data_air.get(3).get("Evaluate"));
+                    progress =Integer.valueOf(data_air.get(3).get("Progress"));
+                    setPading(progress,layout_arrow,value);
                     break;
                 case 4:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.bg_standard);
                     name.setText("PM2.5");
-                    value.setText(data==null?"null":data.getPm25()+"");
+                    value.setText(data_air.get(4).get("Value"));
+                    evaluate.setText(data_air.get(4).get("Evaluate"));
+                    progress =Integer.valueOf(data_air.get(4).get("Progress"));
+                    setPading(progress,layout_arrow,value);
                     break;
                 case 5:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.standard_smoke);
                     name.setText("甲醛");
-                    value.setText(data==null?"null":data.getArofene()+"");
+                    value.setText(data_air.get(1).get("Value"));
+                    evaluate.setText(data_air.get(1).get("Evaluate"));
+                    progress =Integer.valueOf(data_air.get(1).get("Progress"));
+                    setPading(progress,layout_arrow,value);
                     break;
                 case 6:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.standard_smoke);
                     name.setText("烟雾");
-                    value.setText(data==null?"null":data.getSmoke()+"");
+                    value.setText(data_air.get(0).get("Value"));
+                    evaluate.setText(data_air.get(0).get("Evaluate"));
+                    progress =Integer.valueOf(data_air.get(0).get("Progress"));
+                    setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 8:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.standard_tem);
                     name.setText("温度");
-                    value.setText(data==null?"null":data.getTmp()+"");
+                    value.setText(data_room.get(0).get("Value"));
+                    evaluate.setText(data_room.get(0).get("Evaluate"));
+                    progress =Integer.valueOf(data_room.get(0).get("Progress"));
+                    setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 9:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.standard_humidity);
                     name.setText("湿度");
-                    value.setText(data==null?"null":data.getHumidity()+"");
+                    value.setText(data_room.get(1).get("Value"));
+                    evaluate.setText(data_room.get(1).get("Evaluate"));
+                    progress =Integer.valueOf(data_room.get(1).get("Progress"));
+                    setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 10:
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
+                    layout_per.setVisibility(View.GONE);
                     image.setImageResource(R.drawable.standard_humidity);
                     name.setText("气压");
                     layout_per.setVisibility(View.GONE);
-                    value.setText(data==null?"null":data.getAtm()+"");
+                    value.setText(data_room.get(2).get("Value"));
+                    evaluate.setText(data_room.get(2).get("Evaluate"));
+                    progress =Integer.valueOf(data_room.get(1).get("Progress"));
+                    setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 11:
                     layout_per.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.standard_light);
                     name.setText("光线强度");
-                    value.setText(data==null?"null":data.getLight()+"");
+                    value.setText(data_room.get(4).get("Value"));
+                    evaluate.setText(data_room.get(4).get("Evaluate"));
+                    progress =Integer.valueOf(data_room.get(1).get("Progress"));
+                    setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 12:
                     layout_per.setVisibility(View.GONE);
-                    layout_per.setVisibility(View.VISIBLE);
-                    person.setImageResource(R.drawable.person0);
+//                    person.setImageResource(R.drawable.person0);
                     name.setText("人员信息");
-                    value.setText(data.getStaff()==0.0?"没人":"有人");
+//                    value.setText(data_room.get(3).get("Value"));
+                    value.setVisibility(View.GONE);
+                    evaluate.setText(data_room.get(3).get("Evaluate"));
+                    layout_arrow.setVisibility(View.INVISIBLE);
+                    image.setVisibility(View.INVISIBLE);
                     break;
                 case 14:
                     layout_per.setVisibility(View.GONE);
-//                    image.setImageResource(R.mipmap.ic_gradient);
+                    image.setVisibility(View.INVISIBLE);
                     name.setText("X轴倾斜角");
-                    value.setText(data==null?"null":data.getXdegree()+"");
+//                    value.setText(data_posture.get(0).get("Value"));
+                    layout_arrow.setVisibility(View.GONE);
+                    image.setVisibility(View.GONE);
+                    value.setVisibility(View.GONE);
+                    evaluate.setText(data_posture.get(0).get("Value"));
                     break;
                 case 15:
                     layout_per.setVisibility(View.GONE);
-//                    image.setImageResource(R.mipmap.ic_gradient);
+                    image.setVisibility(View.INVISIBLE);
                     name.setText("Y轴倾斜角");
-                    value.setText(data==null?"null":data.getYdegree()+"");
+                    layout_arrow.setVisibility(View.GONE);
+                    image.setVisibility(View.GONE);
+                    value.setVisibility(View.GONE);
+                    evaluate.setText(data_posture.get(1).get("Value"));
                     break;
                 case 16:
                     layout_per.setVisibility(View.GONE);
-//                    image.setImageResource(R.mipmap.ic_gradient);
-                    name.setText("Z轴倾斜角");
-                    value.setText(data==null?"null":data.getZdegree()+"");
+                    image.setVisibility(View.INVISIBLE);
+                    name.setText("水平倾斜角");
+                    evaluate.setText(data_posture.get(2).get("Value"));
+                    layout_arrow.setVisibility(View.INVISIBLE);
+                    image.setVisibility(View.GONE);
+                    value.setVisibility(View.GONE);
                     break;
                 default:
                     break;
@@ -241,6 +315,16 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
             seekbar_b=(SeekBar)view.findViewById(R.id.seekbar_b);   //蓝灯滚动条
         }
 
+        public void setData() {
+            red.setState(map.get("state_r").equals("1")?true:false);
+            blue.setState(map.get("state_b").equals("1")?true:false);
+            green.setState(map.get("state_g").equals("1")?true:false);
+
+            seekbar_r.setProgress(Integer.valueOf(map.get("progress_r")));
+            seekbar_g.setProgress(Integer.valueOf(map.get("progress_g")));
+            seekbar_b.setProgress(Integer.valueOf(map.get("progress_b")));
+        }
+
         public void setListener(){
             red.setOnChangeListener(this);
             green.setOnChangeListener(this);
@@ -271,6 +355,8 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
         public void onStopTrackingTouch(SeekBar seekBar) {
 
         }
+
+
     }
 
     /**
@@ -317,6 +403,20 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
          * @param fromUser
          */
         void onSeekBarChangedListener(SeekBar seekBar, int progress, boolean fromUser);
+    }
+    private void setPading(int progress,LinearLayout layout_arrow,TextView value){
+        value.setVisibility(View.VISIBLE);
+        layout_arrow.setPadding(Pwidth * progress / 200, 0, 0, 0);
+        if(progress<50)
+        {
+            value.setGravity(Gravity.LEFT);
+            value.setPadding(Pwidth * progress / 200, 0, 0, 0);   //设置左边距
+        }
+        else
+        {
+            value.setGravity(Gravity.RIGHT);
+            value.setPadding(0, 0, Pwidth * (90 - progress) / 200, 0);  //设置右边距
+        }
     }
 }
 

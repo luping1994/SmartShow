@@ -2,6 +2,7 @@ package com.suntrans.smartshow.fragment;
 
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.graphics.ColorUtils;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -42,6 +43,11 @@ public class PowerInfoFragment extends BaseFragment {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             Map<String, Object> map = (Map<String, Object>) msg.obj;
+            int count =msg.what;
+            LogUtil.i(count+"");
+            if (count!=31){
+                return;
+            }
             byte[] bytes = (byte[]) (map.get("data"));
             String s =Converts.Bytes2HexString(bytes);
             s = s.substring(2,s.length());//截掉内网加的协议f2
@@ -92,13 +98,34 @@ public class PowerInfoFragment extends BaseFragment {
                 ((Smartroom_Activity)getActivity()).binder.sendOrder(order,9);
             }
         });
+
+
         refreshLayout.setColorSchemeResources(android.R.color.holo_green_light,
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light,
                 android.R.color.holo_blue_light);
+
+    }
+    private String order = "fe 68 34 27 00 07 14 20 68 1f 00";//刷新数据命令
+    private boolean isRefresh =false;//是否刷新
+    @Override
+    public void onDestroy() {
+        isRefresh = false;
+        super.onDestroy();
+    }
+
+    @Override
+    protected void parseObtainedMsg(byte[] bytes) {
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
+                refreshLayout.setRefreshing(true);
                 ((Smartroom_Activity)getActivity()).binder.sendOrder(order,9);
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -111,36 +138,34 @@ public class PowerInfoFragment extends BaseFragment {
                 }, 2000);
             }
         });
-        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                while (isRefresh){
+    }
 
-                    try {
-                        if (((Smartroom_Activity)getActivity()).binder!=null){
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        if (isVisibleToUser){
+            isRefresh=true;
+            if (refreshLayout!=null){
+
+            }
+
+            ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+                @Override
+                public void run() {
+                    while (isRefresh){
+                        try {
+                            if (((Smartroom_Activity)getActivity()).binder!=null){
+                                ((Smartroom_Activity)getActivity()).binder.sendOrder(order,9);
+                            }
+                            Thread.sleep(10000);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        Thread.sleep(10000);
-                        ((Smartroom_Activity)getActivity()).binder.sendOrder(order,9);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
-            }
-        });
+            });
+        }else {
+            isRefresh = false;
+        }
     }
-    private String order = "fe 68 34 27 00 07 14 20 68 1f 00";//刷新数据命令
-    private boolean isRefresh =true;//是否刷新
-    @Override
-    public void onDestroy() {
-        isRefresh = false;
-        super.onDestroy();
-    }
-
-    @Override
-    protected void parseObtainedMsg(byte[] bytes) {
-
-    }
-
-
 }

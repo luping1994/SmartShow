@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.suntrans.smartshow.Convert.Converts;
+import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.utils.LogUtil;
 
 import java.io.BufferedReader;
@@ -32,8 +33,8 @@ import java.net.Socket;
  */
 public class MainService1 extends Service {
     public Socket client=null;    //保持TCP连接的串口服务器ip socket
-    public String serverip="192.168.1.213";     //服务器IP
-    public int port=8000;    //服务器端口
+    public String serverip;     //串口服务器IP
+    public int port;    //串口服务器端口
     private IBinder binder;
     private String SerialNumber;   //手机唯一标识
     private ConnectivityManager mConnectivityManager;
@@ -42,8 +43,8 @@ public class MainService1 extends Service {
     public static int SIXSENSOR=4;   //第六感代号
 
     public Socket sixClient=null;    //保持TCP连接的第六感socket
-    public String SixSensorip="192.168.1.235";     //服务器IP
-    public int sixPort=8000;    //第六感端口
+    public String SixSensorip;     //第六感IP
+    public int sixPort;    //第六感端口
     private String Addr="0001";    //第六感官的地址，从0000到ffff。跟用户名相对应
 
     boolean IsInnerNet = true;//是否是内网
@@ -61,9 +62,9 @@ public class MainService1 extends Service {
                     try
                     {
                         //获取服务器ip
-//                        final InetAddress serverAddr = InetAddress.getByName(serverip);// TCPServer.SERVERIP
+//                        final InetAddress serverAddr = InetAddress.getByName(sixSensorIp);// TCPServer.SERVERIP
                         //定义socketaddress
-                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, port);
+                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, sixSensorPort);
                         client = new Socket(serverip, port);   //新建TCP连接
                         new TCPServerThread().start();    //开启新的线程接收数据
                         //client.connect(my_sockaddr,5000);	  //第二个参数是timeout
@@ -94,15 +95,15 @@ public class MainService1 extends Service {
                 }
             }.start();
 
-        if(sixClient==null)   //如果client为空，则建立连接
+        if(sixClient==null&&IsInnerNet==true)   //如果client为空，并且为内网模式，外网模式用一个client就够了则建立第六感客户端连接
             new Thread(){      //不能在主线程中访问网络，所以要新建线程
                 public void run(){   //新建线程连接服务器，不占用主线程
                     try
                     {
                         //获取服务器ip
-//                        final InetAddress serverAddr = InetAddress.getByName(serverip);// TCPServer.SERVERIP
+//                        final InetAddress serverAddr = InetAddress.getByName(sixSensorIp);// TCPServer.SERVERIP
                         //定义socketaddress
-                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, port);
+                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, sixSensorPort);
                         sixClient = new Socket(SixSensorip, sixPort);   //新建TCP连接
                         if (IsInnerNet){
                             new TCPServerThread1().start();    //开启新的线程接收数据
@@ -348,6 +349,16 @@ public class MainService1 extends Service {
     public void onCreate() {
         Log.v("Service", "ServiceDemo onCreate");
 
+        SixSensorip  = BaseApplication.getSharedPreferences().getString("sixIpAddress","null");
+        sixPort = BaseApplication.getSharedPreferences().getInt("sixPort",-1);
+
+        serverip =BaseApplication.getSharedPreferences().getString("chunkouIpAddress","null");
+        port = BaseApplication.getSharedPreferences().getInt("null",8000);
+        if (serverip.equals("192.168.1.213")){
+            IsInnerNet =  true;
+        }else {
+            IsInnerNet = false;
+        }
         SerialNumber = "0001";
         Log.i("Internet", "网络状态：" + (IsNetWork() ? "可用" : "不可用"));   //判断网络状态,打开wifi显示可用，关闭wifi显示不可用。但是不确定能不能联网
         IntentFilter mFilter = new IntentFilter();
@@ -443,9 +454,8 @@ public class MainService1 extends Service {
                                     //   String crc=Converts.GetCRC(a, 2, msg.what-2-2);    //获取返回数据的校验码，倒数第3、4位是验证码，倒数第1、2位是包尾0d0a
                                     s = s.replace(" ", ""); //去掉空格
                                     String[] single_str=s.split("0d0a");   //防止多条命令重叠，对命令按照包尾0d0a进行分解，逐条广播
-//                                    for(String str:single_str)
-//                                    {
-                                    String str = single_str[0];
+                                    for(String str:single_str)
+                                    {
                                         //电表通讯协议中包尾是16，不是0d0a，此处加上0d0a不影响电表数据的解析，因为解析的时候没有计算校验
                                         byte[] tem=Converts.HexString2Bytes(str+"0d0a");   //转换成byte数组
                                         if(tem.length>=14) {
@@ -456,7 +466,7 @@ public class MainService1 extends Service {
                                             sendBroadcast(intent);   //发送广播，通知各个activity
                                         }
                                         Log.i("Order", "收到数据：" + str+"0d0a");
-//                                    }
+                                    }
 
 
                                 }

@@ -148,7 +148,17 @@ public class RoadBulb_Activity extends AppCompatActivity{
             @Override
             public void run() {
                 refreshLayout.setRefreshing(true);
-                getSwitchState();
+                if (binder!=null){
+                    getSwitchState();
+                }
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                        }
+                    }
+                }, 2000);
             }
         });
         recyclerView.setAdapter(adapter);
@@ -157,6 +167,14 @@ public class RoadBulb_Activity extends AppCompatActivity{
             @Override
             public void onRefresh() {
                 getSwitchState();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                        }
+                    }
+                }, 2000);
             }
         });
 //        ThreadManager.getInstance().createLongPool().execute(new Runnable() {

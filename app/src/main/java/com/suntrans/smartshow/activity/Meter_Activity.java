@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -121,16 +122,48 @@ public class Meter_Activity extends AppCompatActivity {
         });
         refreshLayout.setColorSchemeResources(android.R.color.holo_green_light,
                 android.R.color.holo_orange_light,
-                android.R.color.holo_red_light,
+                android.R.color.holo_purple,
                 android.R.color.holo_blue_light);
+        refreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                refreshLayout.setRefreshing(true);
+                    if (binder!=null){
+                        getDataFromServer();
+                    }
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                        }
+                    }
+                }, 2000);
 
+            }
+        });
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                      getDataFromServer();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                        }
+                    }
+                }, 2000);
             }
         });
         recyclerView.setAdapter(adapter);
+    }
+    Handler handler = new Handler();
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+
     }
 
     @Override
@@ -367,6 +400,14 @@ public class Meter_Activity extends AppCompatActivity {
             binder.sendOrder(order,6);
         }else
             order="";
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (refreshLayout.isRefreshing()){
+                    refreshLayout.setRefreshing(false);
+                }
+            }
+        }, 2000);
     }
 
     /**

@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.suntrans.smartshow.Convert.Converts;
+import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.utils.LogUtil;
 
 import java.io.BufferedReader;
@@ -33,12 +34,13 @@ import java.net.Socket;
 public class SmartHomeService extends Service {
     public Socket client=null;    //保持TCP连接的socket
 
-  public String serverip="192.168.1.235";     //服务器IP
-    public int port=8000;    //服务器端口
+    public String sixSensorIp;     //服务器IP
+    public int sixSensorPort;    //服务器端口
     private IBinder binder;
     private String SerialNumber;   //手机唯一标识
     private ConnectivityManager mConnectivityManager;
     private NetworkInfo netInfo;
+    private boolean isInnerNet;
     public static int SWITCH=2;      //开关代号
     public static int THREEPHASE=3;  //三相电表代号
     public static int SIXSENSOR=4;   //第六感代号
@@ -47,20 +49,20 @@ public class SmartHomeService extends Service {
     public IBinder onBind(Intent intent) {
         Log.v("Service", "ServiceDemo onBind");
         SharedPreferences sharedPreferences= getSharedPreferences("data", Activity.MODE_PRIVATE);
-//        serverip =sharedPreferences.getString("serverip", "-1");   //读取服务器ip，若没有则是-1
-//        port= Integer.valueOf(sharedPreferences.getString("port", "8086"));
+//        sixSensorIp =sharedPreferences.getString("sixSensorIp", "-1");   //读取服务器ip，若没有则是-1
+//        sixSensorPort= Integer.valueOf(sharedPreferences.getString("sixSensorPort", "8086"));
 
-        Log.i("Intenet", "serverip==>" + serverip);
+        Log.i("Intenet", "sixSensorIp==>" + sixSensorIp);
         if(client==null)   //如果client为空，则建立连接
             new Thread(){      //不能在主线程中访问网络，所以要新建线程
                 public void run(){   //新建线程连接服务器，不占用主线程
                     try
                     {
                         //获取服务器ip
-//                        final InetAddress serverAddr = InetAddress.getByName(serverip);// TCPServer.SERVERIP
+//                        final InetAddress serverAddr = InetAddress.getByName(sixSensorIp);// TCPServer.SERVERIP
                         //定义socketaddress
-                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, port);
-                        client = new Socket(serverip, port);   //新建TCP连接
+                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, sixSensorPort);
+                        client = new Socket(sixSensorIp, sixSensorPort);   //新建TCP连接
                         new TCPServerThread().start();    //开启新的线程接收数据
 
                     }
@@ -122,8 +124,8 @@ public class SmartHomeService extends Service {
                                     }
                                 }
                                 client = null;
-                                InetAddress serverAddr = InetAddress.getByName(serverip);// TCPServer.SERVERIP
-                                client = new Socket(serverAddr, port);   //新建TCP连接
+                                InetAddress serverAddr = InetAddress.getByName(sixSensorIp);// TCPServer.SERVERIP
+                                client = new Socket(serverAddr, sixSensorPort);   //新建TCP连接
                                 new TCPServerThread().start();
                                 out = new DataOutputStream(client.getOutputStream());
                                 Thread.sleep(100);
@@ -172,11 +174,14 @@ public class SmartHomeService extends Service {
     @Override   //只调用一次
     public void onCreate() {
         Log.v("Service", "ServiceDemo onCreate");
-      //  SerialNumber = android.os.Build.SERIAL;   //获取唯一标识
-//        if(SerialNumber!=null)
-//            SerialNumber=SerialNumber.length()>3?SerialNumber.substring(SerialNumber.length()-4,SerialNumber.length()):"0000";
-//        else
-//            SerialNumber="0000";
+        //从本地获取ip地址。默认内网模式
+        sixSensorIp = BaseApplication.getSharedPreferences().getString("sixIpAddress","null");
+        sixSensorPort = BaseApplication.getSharedPreferences().getInt("sixPort",-1);
+        if (sixSensorIp.equals("192.168.1.235")){
+            isInnerNet = true;
+        }else {
+            isInnerNet=false;
+        }
         SerialNumber = "0001";
         Log.i("Internet", "网络状态：" + (IsNetWork() ? "可用" : "不可用"));   //判断网络状态,打开wifi显示可用，关闭wifi显示不可用。但是不确定能不能联网
         IntentFilter mFilter = new IntentFilter();

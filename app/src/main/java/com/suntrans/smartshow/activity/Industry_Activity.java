@@ -1,19 +1,35 @@
 package com.suntrans.smartshow.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.Message;
+import android.print.PrinterCapabilitiesInfo;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.base.BaseActivity;
 import com.suntrans.smartshow.fragment.IndustryControlFragment;
+import com.suntrans.smartshow.service.MainService1;
+import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.UiUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
+
+import static android.R.attr.data;
 import static com.suntrans.smartshow.R.id.layout_back;
 import static com.suntrans.smartshow.R.id.toolbar;
 
@@ -26,6 +42,9 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
 
     private Toolbar toolbar;
     private FrameLayout frameLayout;
+    private IndustryControlFragment fragment;
+
+
     @Override
     public int getLayoutId() {
         return R.layout.template_common;
@@ -38,13 +57,24 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
 
     @Override
     public void initData() {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fl_content,new IndustryControlFragment()).commit();
+        fragment = new IndustryControlFragment();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fl_content,fragment).commit();
 
     }
 
     @Override
     protected void parseData(Context context, Intent intent) {
-
+        byte[] bytes = intent.getByteArrayExtra("Content");
+        String s = Converts.Bytes2HexString(bytes);
+        if (s.substring(0,4).equals("f5aa")&&s.length()==16){
+            s=s.substring(0,2);
+            Map<String,String> map = new HashMap<>();
+            map.put("data",s);
+            Message msg = new Message();
+            msg.obj = map;
+            msg.what = s.length();
+            fragment.handler.sendMessage(msg);
+        }
     }
 
     @Override
@@ -54,7 +84,6 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
         if (actionBar!=null){
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
-//            actionBar.setTitle("三相电动机控制器");
         }
     }
 
@@ -62,14 +91,7 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()){
-//            case layout_back:
-//                finish();
-//                break;
-//            case R.id.ll_state:
-//
-//                break;
-//            case R.id.ll_con:
-//                break;
+
         }
     }
 
@@ -84,4 +106,5 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
         }
         return super.onOptionsItemSelected(item);
     }
+
 }
