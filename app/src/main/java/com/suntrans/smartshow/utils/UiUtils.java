@@ -1,4 +1,5 @@
 package com.suntrans.smartshow.utils;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -18,12 +19,8 @@ import com.suntrans.smartshow.base.BaseApplication;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class UiUtils {
@@ -194,53 +191,37 @@ public class UiUtils {
 		return uri;
 	}
 
-	public static Observable savaPicAndShare(final Context context , final String url , final String title){
+//
+	/**
+	 * 将十六进制的字符串转化为十进制的数值
+	 */
+	public static long HexToDec(String hexStr) {
+		Map<String, Integer> hexMap = prepareDate(); // 先准备对应关系数据
+		int length = hexStr.length();
+		long result = 0L; // 保存最终的结果
+		for (int i = 0; i < length; i++) {
+			result += hexMap.get(hexStr.subSequence(i, i + 1)) * Math.pow(16, length - 1 - i);
+		}
+//        System.out.println("hexStr=" + hexStr + ",result=" + result);
+		return result;
+	}
 
-		return Observable.create(new Observable.OnSubscribe<Bitmap>() {
-
-			@Override
-			public void call(Subscriber<? super Bitmap> subscriber) {
-					Bitmap bitmap = null;
-				try {
-					bitmap = Picasso.with(context).load(url).get();
-				} catch (IOException e) {
-					e.printStackTrace();
-					subscriber.onError(e);
-				}
-				if (bitmap == null){
-					subscriber.onError(new Exception("下载的图片为空"));
-				}
-				subscriber.onNext(bitmap);
-				subscriber.onCompleted();
-			}
-		}).flatMap(new Func1<Bitmap, Observable<?>>() {
-			@Override
-			public Observable<?> call(Bitmap bitmap) {
-				File appDir = new File(Environment.getExternalStorageDirectory().getPath()
-				,"pic");
-				if (!appDir.exists()){
-					appDir.mkdirs();
-				}
-				File file = new File(appDir.getAbsolutePath(), title.replace('/', '-') + ".jpg");
-				try {
-					FileOutputStream fos = new FileOutputStream(file);
-					assert  bitmap !=null;
-					bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-					fos.flush();
-					fos.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				Uri uri = Uri.fromFile(file);
-				Intent intent  = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri);
-				context.sendBroadcast(intent);
-
-				return Observable.just(uri);
-			}
-		}).subscribeOn(Schedulers.io());
-
-	};
-
+	/**
+	 * 准备十六进制字符对应关系。如("1",1)...("A",10),("B",11)
+	 */
+	private static HashMap<String, Integer> prepareDate() {
+		HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+		for (int i = 0; i <= 9; i++) {
+			hashMap.put(i + "", i);
+		}
+		hashMap.put("a", 10);
+		hashMap.put("b", 11);
+		hashMap.put("c", 12);
+		hashMap.put("d", 13);
+		hashMap.put("e", 14);
+		hashMap.put("f", 15);
+		return hashMap;
+	}
 
 
 }

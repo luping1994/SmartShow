@@ -79,7 +79,7 @@
                 android:orientation="vertical"
                 android:text="三项电机控制"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="50dip">
             </Button>
 
 
@@ -96,7 +96,7 @@
             android:textColor="@color/white"
             android:textSize="17sp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="50dip">
         </Button>
 
 </LinearLayout>

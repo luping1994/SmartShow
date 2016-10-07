@@ -1,10 +1,14 @@
 package com.suntrans.smartshow.utils;
 
+//
+//import rx.Observable;
+//import rx.subjects.PublishSubject;
+//import rx.subjects.SerializedSubject;
+//import rx.subjects.Subject;
 
-import rx.Observable;
-import rx.subjects.PublishSubject;
-import rx.subjects.SerializedSubject;
-import rx.subjects.Subject;
+import android.database.Observable;
+
+import javax.security.auth.Subject;
 
 /**
  * RxBus第二种实现方法
@@ -19,65 +23,65 @@ import rx.subjects.Subject;
  */
 public class RxBus
 {
-
-    private static volatile RxBus mInstance;
-
-    private final Subject bus;
-
-
-    public RxBus()
-    {
-
-        bus = new SerializedSubject<>(PublishSubject.create());
-    }
-
-    /**
-     * 单例模式RxBus2
-     *
-     * @return
-     */
-    public static RxBus getInstance()
-    {
-
-        RxBus rxBus = mInstance;
-        if (mInstance == null)
-        {
-            synchronized (RxBus.class)
-            {
-                rxBus = mInstance;
-                if (mInstance == null)
-                {
-                    rxBus = new RxBus();
-                    mInstance = rxBus;
-                }
-            }
-        }
-
-        return rxBus;
-    }
-
-
-    /**
-     * 发送消息
-     *
-     * @param object
-     */
-    public void post(Object object)
-    {
-
-        bus.onNext(object);
-    }
-
-    /**
-     * 接收消息
-     *
-     * @param eventType
-     * @param <T>
-     * @return
-     */
-    public <T> Observable<T> toObserverable(Class<T> eventType)
-    {
-
-        return bus.ofType(eventType);
-    }
+//
+//    private static volatile RxBus mInstance;
+//
+//    private final Subject bus;
+//
+//
+//    public RxBus()
+//    {
+//
+//        bus = new SerializedSubject<>(PublishSubject.create());
+//    }
+//
+//    /**
+//     * 单例模式RxBus2
+//     *
+//     * @return
+//     */
+//    public static RxBus getInstance()
+//    {
+//
+//        RxBus rxBus = mInstance;
+//        if (mInstance == null)
+//        {
+//            synchronized (RxBus.class)
+//            {
+//                rxBus = mInstance;
+//                if (mInstance == null)
+//                {
+//                    rxBus = new RxBus();
+//                    mInstance = rxBus;
+//                }
+//            }
+//        }
+//
+//        return rxBus;
+//    }
+//
+//
+//    /**
+//     * 发送消息
+//     *
+//     * @param object
+//     */
+//    public void post(Object object)
+//    {
+//
+//        bus.onNext(object);
+//    }
+//
+//    /**
+//     * 接收消息
+//     *
+//     * @param eventType
+//     * @param <T>
+//     * @return
+//     */
+//    public <T> Observable<T> toObserverable(Class<T> eventType)
+//    {
+//
+//        return bus.ofType(eventType);
+//    }
 }

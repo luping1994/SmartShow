@@ -28,10 +28,10 @@ import java.net.Socket;
 
 
 /**
- * Create by 1111b on 2015/12/12.
+ * Create by Looney on 2016/09/26.
  *  智能家居开关控制部分的service
  */
-public class SmartHomeService extends Service {
+public class MainService2 extends Service {
     public Socket client=null;    //保持TCP连接的socket
 
     public String sixSensorIp;     //服务器IP
@@ -40,7 +40,7 @@ public class SmartHomeService extends Service {
     private String SerialNumber;   //手机唯一标识
     private ConnectivityManager mConnectivityManager;
     private NetworkInfo netInfo;
-    private boolean isInnerNet;
+    public static boolean isInnerNet1;
     public static int SWITCH=2;      //开关代号
     public static int THREEPHASE=3;  //三相电表代号
     public static int SIXSENSOR=4;   //第六感代号
@@ -58,18 +58,31 @@ public class SmartHomeService extends Service {
                 public void run(){   //新建线程连接服务器，不占用主线程
                     try
                     {
-                        //获取服务器ip
-//                        final InetAddress serverAddr = InetAddress.getByName(sixSensorIp);// TCPServer.SERVERIP
-                        //定义socketaddress
-                        //final SocketAddress my_sockaddr = new InetSocketAddress(serverAddr, sixSensorPort);
-                        client = new Socket(sixSensorIp, sixSensorPort);   //新建TCP连接
+                        InetAddress serverAddr = InetAddress.getByName(sixSensorIp);// TCPServer.SERVERIP
+                        client = new Socket(serverAddr, sixSensorPort);   //新建TCP连接
                         new TCPServerThread().start();    //开启新的线程接收数据
-
+                        Thread.sleep(100);
+                        DataOutputStream out=new DataOutputStream(client.getOutputStream());
+                        // 把用户输入的内容发送给server
+                        //String toServer = "ab68 F006 0500 000a 14 0001 0002 0003 0004 0005 0006 0007 0008 0009 000a";    //查询开关所有通道的状态
+                        String toServer="ab70 "+SerialNumber;  //发送手机地址
+                        toServer = toServer.replace(" ","");    //去掉空格
+                        byte[] bt=null;
+                        bt= Converts.HexString2Bytes(toServer);
+                        String str=toServer+Converts.GetCRC(bt, 0, bt.length);   //添加校验码
+                        LogUtil.i("外网校验码",str);
+                        byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
+                        if(!client.isClosed())
+                        {
+                            out.write(bt1);
+                            out.flush();
+                            //out.close();   //关闭输出流
+                        }
                     }
                     catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
-                        Log.i("Order", "出错：" + e.toString());
+                        LogUtil.i("Order", "出错：" + e.toString());
                      //   Log.i("Order", SerialNumber==null?"null":SerialNumber);
                     }
 
@@ -94,8 +107,12 @@ public class SmartHomeService extends Service {
                             bt=Converts.HexString2Bytes(toServer);
                             String str="";
                             if(dev==SWITCH||dev==SIXSENSOR)
-                                str= toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
-                            Log.i("Order","发送数据："+str);
+                                if (isInnerNet1){
+                                    str=toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                }else {
+                                    str="ab68"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                }
+                            str= str.replace(" ","");
                             byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                             if(!client.isClosed())
                                 if(client.isConnected())
@@ -103,6 +120,7 @@ public class SmartHomeService extends Service {
                                     {
                                         out.write(bt1);
                                         out.flush();
+                                        LogUtil.i("service发送命令："+str);
                                     }
                         }
                         catch (Exception e) {			// 发送出错，证明TCP断开了连接，重新建立连接
@@ -130,10 +148,10 @@ public class SmartHomeService extends Service {
                                 out = new DataOutputStream(client.getOutputStream());
                                 Thread.sleep(100);
                                 String toServer = "ab70 " + SerialNumber;  //发送手机地址，发送后手机才能接收到服务器的数据
-                                toServer.replace(" ", "");    //去掉空格
+                                toServer = toServer.replace(" ", "");    //去掉空格
                                 byte[] bt = null;
                                 bt = Converts.HexString2Bytes(toServer);
-                                String str = toServer + Converts.GetCRC(bt, 2, bt.length);   //添加校验码
+                                String str = toServer + Converts.GetCRC(bt, 0, bt.length);   //添加校验码
                                 byte[] bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                                 if (!client.isClosed())
                                 {
@@ -142,14 +160,17 @@ public class SmartHomeService extends Service {
                                 }
                                 Thread.sleep(100);
                                 toServer =  order;    //指令，添加包头和第六感官地址
-                                toServer.replace(" ", "");    //去掉空格
+                                toServer = toServer.replace(" ", "");    //去掉空格
                                 bt = null;
                                 bt = Converts.HexString2Bytes(toServer);
                                 if(dev==SWITCH||dev==SIXSENSOR){
-                                    str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
-                                    LogUtil.i("service发送命令：="+str);
+                                    if (isInnerNet1){
+                                        str=toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                    }else {
+                                        str="ab68"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                    }
                                 }
-                                LogUtil.i("service发送命令：="+str);
+                                LogUtil.i("service发送命令："+str);
                                 bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                                 if (!client.isClosed()) {
                                     out.write(bt1);
@@ -178,12 +199,12 @@ public class SmartHomeService extends Service {
         sixSensorIp = BaseApplication.getSharedPreferences().getString("sixIpAddress","null");
         sixSensorPort = BaseApplication.getSharedPreferences().getInt("sixPort",-1);
         if (sixSensorIp.equals("192.168.1.235")){
-            isInnerNet = true;
+            isInnerNet1 = true;
         }else {
-            isInnerNet=false;
+            isInnerNet1 =false;
         }
         SerialNumber = "0001";
-        Log.i("Internet", "网络状态：" + (IsNetWork() ? "可用" : "不可用"));   //判断网络状态,打开wifi显示可用，关闭wifi显示不可用。但是不确定能不能联网
+        LogUtil.i("Internet", "网络状态：" + (IsNetWork() ? "可用" : "不可用"));   //判断网络状态,打开wifi显示可用，关闭wifi显示不可用。但是不确定能不能联网
         IntentFilter mFilter = new IntentFilter();
         mFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(myNetReceiver, mFilter);   //注册接收网络连接状态改变广播接收器
@@ -272,7 +293,7 @@ public class SmartHomeService extends Service {
                                     {
                                         //电表通讯协议中包尾是16，不是0d0a，此处加上0d0a不影响电表数据的解析，因为解析的时候没有计算校验
                                         byte[] tem=Converts.HexString2Bytes(str+"0d0a");   //转换成byte数组
-                                        if(tem.length>=14) {
+                                        if(tem.length>9) {
                                             Intent intent = new Intent();
                                             intent.setAction("com.suntrans.beijing.RECEIVE1");
                                             intent.putExtra("ContentNum", tem.length);   //数组长度

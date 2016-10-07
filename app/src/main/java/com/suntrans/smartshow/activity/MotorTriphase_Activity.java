@@ -38,7 +38,7 @@ import static com.suntrans.smartshow.R.id.toolbar;
  * 控制电机主页面
  */
 
-public class Industry_Activity extends BaseActivity implements View.OnClickListener {
+public class MotorTriphase_Activity extends BaseActivity implements View.OnClickListener {
 
     private Toolbar toolbar;
     private FrameLayout frameLayout;
@@ -63,18 +63,33 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
     }
 
     @Override
-    protected void parseData(Context context, Intent intent) {
+    public void parseData(Context context, Intent intent) {
         byte[] bytes = intent.getByteArrayExtra("Content");
         String s = Converts.Bytes2HexString(bytes);
-        if (s.substring(0,4).equals("f5aa")&&s.length()==16){
-            s=s.substring(0,2);
-            Map<String,String> map = new HashMap<>();
-            map.put("data",s);
-            Message msg = new Message();
-            msg.obj = map;
-            msg.what = s.length();
-            fragment.handler.sendMessage(msg);
+        s=s.toLowerCase();
+        System.out.println("sbbbbbbbbbbbbbb"+s);
+        if (MainService1.IsInnerNet){
+            if (s.substring(0,6).equals("f5aa0b")&&s.length()>10){
+                s=s.substring(2,s.length());
+                Map<String,String> map = new HashMap<>();
+                map.put("data",s);
+                Message msg = new Message();
+                msg.obj = map;
+                msg.what = s.length();
+                fragment.handler.sendMessage(msg);
+            }
+        }else {
+            if (s.substring(0,20).equals("020000ff00571f95aa0b")&&s.length()>10){
+                s=s.substring(16,s.length());
+                Map<String,String> map = new HashMap<>();
+                map.put("data",s);
+                Message msg = new Message();
+                msg.obj = map;
+                msg.what = s.length();
+                fragment.handler.sendMessage(msg);
+            }
         }
+
     }
 
     @Override
@@ -84,6 +99,7 @@ public class Industry_Activity extends BaseActivity implements View.OnClickListe
         if (actionBar!=null){
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_back_normal);
         }
     }
 

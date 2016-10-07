@@ -18,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,9 +31,11 @@ import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.base.BaseActivity1;
+import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
+import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
 
 import java.text.SimpleDateFormat;
@@ -55,16 +58,20 @@ public class Meter_Activity extends AppCompatActivity {
     private String title;
     private ArrayList<Map<String, String>> data = new ArrayList<>();
     private mAdapter adapter;
-    private static String  date;//日期
+    private  String  date;//日期
     public MainService1.ibinder binder;  //用于Activity与Service通信
-
+    private String waterMeterAddr = "04 04 00 11 14 38 00";//水表反向地址
+    private String AmMeterAddr = "14 29 00 07 14 20";//电表反向地址
+    private String AirMeterAddr = "47 79 02 02 38 08 00";//气表反向地址
+    private String HotMeterAddr = "85 05 55 45 10 05 02";//热量表反向地址
     private ServiceConnection con = new ServiceConnection() {
         //绑定服务成功后，调用此方法，获取返回的IBinder对象，可以用来调用Service中的方法
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LogUtil.i("绑定成功");
             binder=(MainService1.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
-//            binder.sendOrder(addr+"f003 000e",4);
+            getDataFromServer();
+//  binder.sendOrder(addr+"f003 000e",4);
             //    Log.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
         }
 
@@ -128,18 +135,15 @@ public class Meter_Activity extends AppCompatActivity {
             @Override
             public void run() {
                 refreshLayout.setRefreshing(true);
-                    if (binder!=null){
-                        getDataFromServer();
-                    }
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         if (refreshLayout.isRefreshing()){
                             refreshLayout.setRefreshing(false);
+                            Toast.makeText(Meter_Activity.this,"请求失败",Toast.LENGTH_SHORT);
                         }
                     }
-                }, 2000);
-
+                },2000);
             }
         });
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -157,17 +161,26 @@ public class Meter_Activity extends AppCompatActivity {
             }
         });
         recyclerView.setAdapter(adapter);
+        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                while(isRefresh){
+                    if (binder!=null)
+                    getDataFromServer();
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
     Handler handler = new Handler();
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-
-    }
-
+    boolean isRefresh = true;
     @Override
     protected void onDestroy() {
+        isRefresh = false;
         unbindService(con);   //解除Service的绑定
         unregisterReceiver(broadcastreceiver);  //注销广播接收者
         super.onDestroy();
@@ -390,16 +403,20 @@ public class Meter_Activity extends AppCompatActivity {
     private void getDataFromServer(){
         String order="";
         if (Meter_Type==1){
-            order = "FE 68 14 29 00 07 14 20 68 1F 00";
+            order = "FE 68 "+AmMeterAddr+" 68 1F 00";
             binder.sendOrder(order,3);
         }else if (Meter_Type==2){//水表
-            order ="68 10 04 04 00 11 14 38 00 01 03 90 1F 00 90";
+            order ="68 10 "+waterMeterAddr+" 01 03 90 1F 00 90";
             binder.sendOrder(order,6);
         }else if (Meter_Type==3){
-            order="68 20 85 05 55 45 10 05 02 01 03 90 1F 00 76";
+            order ="68 20 "+HotMeterAddr+" 01 03 90 1F 00 76";
             binder.sendOrder(order,6);
-        }else
-            order="";
+        }else{
+            order ="68 30 "+AirMeterAddr+" 01 03 90 1F 00 24";
+            binder.sendOrder(order,6);
+        }
+
+
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -425,8 +442,20 @@ public class Meter_Activity extends AppCompatActivity {
             s = s + s1;
         }
         s = s.replace(" ", ""); //去掉空格
-        if (s.substring(0,6).equals("f1fefe"))
-        s=s.substring(2,s.length());
+        s=s.toLowerCase();
+        if(MainService1.IsInnerNet){
+            //02 00 00 ff 00 57 1f 91
+            if (!s.substring(0,6).equals("f1fefe"))
+                return;
+                s=s.substring(2,s.length());
+        }else {
+            //02 00 00 ff 00 57 1f 91
+            if (!s.substring(0,20).equals("020000ff00571f91fefe")){
+                return;
+            }
+                s=s.substring(16,s.length());
+        }
+
         byte[] a = Converts.HexString2Bytes(s);
         try {
             double VA = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[13] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[12] & 0xff) - 51)}))) / 10.0;  //A相电压。单位是V
@@ -470,10 +499,20 @@ public class Meter_Activity extends AppCompatActivity {
             s = s + s1;
         }
         s = s.replace(" ", ""); //去掉空格
-        if (!TextUtils.equals(s.substring(0,10),"f3fefefefe")){
-            return;
+        s=s.toLowerCase();
+        if (MainService1.IsInnerNet){
+            if (!s.substring(0,10).equals("f3fefefefe")){
+                return;
+            }
+            s=s.substring(10,s.length());
+        }else {
+            if (!TextUtils.equals(s.substring(0,24),"020000ff00571f93fefefefe")){
+                return;
+            }
+            s=s.substring(24,s.length());
         }
-        s=s.substring(10,s.length());
+
+        LogUtil.i(s);
         byte[] a = Converts.HexString2Bytes(s);
         double current = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[17]&0xff)}))*10000
                 +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[16]&0xff)}))*100
@@ -505,11 +544,19 @@ public class Meter_Activity extends AppCompatActivity {
         String s = Converts.Bytes2HexString(datas);         //保存命令的十六进制字符串
         Converts.Bytes2HexString(datas);
         s = s.replace(" ", ""); //去掉空格
-        if (!TextUtils.equals(s.substring(0,6),"F36820")){
-            return;
+        s=s.toLowerCase();
+        if (MainService1.IsInnerNet){
+            if (!TextUtils.equals(s.substring(0,6),"f36820")){
+                return;
+            }
+            s=s.substring(2,s.length());
+        }else {//                          020000ff00571f936820
+            if (!s.substring(0,20).equals("020000ff00571f936820")){
+                return;
+            }
+            s=s.substring(16,s.length());
         }
-        s=s.substring(2,s.length());
-        LogUtil.i(s);
+
         byte[] a = Converts.HexString2Bytes(s);
         double coldSum = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[14]&0xff)}))/100
                 +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[15]&0xff)}))
@@ -537,7 +584,7 @@ public class Meter_Activity extends AppCompatActivity {
         double temOut = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[42]&0xff)}))/100
                 +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[43]&0xff)}))
                 +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[44]&0xff)}))*100;
-        LogUtil.i("======>>"+coldSum+" kwh "+hotSum+"kwh");
+//        LogUtil.i("======>>"+coldSum+" kwh "+hotSum+"kwh");
         data.get(0).put("Value",coldSum+"kWh");
         data.get(1).put("Value",hotSum+"kWh");
         data.get(2).put("Value",hotRate+" ");
@@ -559,14 +606,28 @@ public class Meter_Activity extends AppCompatActivity {
      * @param datas
      */
     private void parseAir(byte[] datas) {
-        String s = "";                       //保存命令的十六进制字符串
-        for (int i = 0; i < datas.length; i++) {
-            String s1 = Integer.toHexString((datas[i] + 256) % 256);   //byte转换成十六进制字符串(先把byte转换成0-255之间的非负数，因为java中的数据都是带符号的)
-            if (s1.length() == 1)
-                s1 = "0" + s1;
-            s = s + s1;
-        }
+        // String ipaddr = (String) (map.get("ipaddr"));    //开关的IP地址
+        String s = Converts.Bytes2HexString(datas);         //保存命令的十六进制字符串
+        Converts.Bytes2HexString(datas);
         s = s.replace(" ", ""); //去掉空格
+        s=s.toLowerCase();
+        if (!TextUtils.equals(s.substring(0,6),"f3fefe6820")){
+            return;
+        }
+        s=s.substring(2,s.length());//去掉串口服务器的协议F3
+        byte[] a = Converts.HexString2Bytes(s);
+        LogUtil.i(s);
+        double currentSum = Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[16]&0xff)}))/100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[17]&0xff)}))
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[18]&0xff)}))*100
+                +Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte)(a[19]&0xff)}))*10000;
+        data.get(0).put("Value",currentSum+"m³");
+        UiUtils.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
 

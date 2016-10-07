@@ -21,6 +21,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -34,6 +35,7 @@ import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
 import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
+import com.suntrans.smartshow.views.LoadingDialog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +55,6 @@ public class RoadBulb_Activity extends AppCompatActivity{
     private Toolbar toolbar;
     private RoadBulbAdapter adapter;
     private boolean isRefresh=true;
-    private ProgressBar progressBar;
 //    private SmartSwitch datas;
     String road_addr="00010004";
     private   ArrayList<Map<String,String>> datas = new ArrayList<Map<String, String>>(10);
@@ -95,7 +96,7 @@ public class RoadBulb_Activity extends AppCompatActivity{
 
         initRx();
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-        progressBar= (ProgressBar) findViewById(R.id.pb);
+        dialog = new LoadingDialog(this);
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshlayout);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerview);
         textView = (TextView) findViewById(R.id.tv_title);
@@ -115,7 +116,7 @@ public class RoadBulb_Activity extends AppCompatActivity{
         adapter.setOnItemClickListener(new RoadBulbAdapter.OnItemClickListener() {
             @Override
             public void onClick(View view, final int position) {
-                progressBar.setVisibility(View.VISIBLE);
+                        showFailedDialog();
                         String ps = datas.get(position).get("state");
                         if (position!=9){
                             if (TextUtils.equals(ps,"0")){
@@ -177,21 +178,21 @@ public class RoadBulb_Activity extends AppCompatActivity{
                 }, 2000);
             }
         });
-//        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                while (isRefresh){
-//                    if (binder!=null){
-//                        getSwitchState();
-//                    }
-//                    try {
-//                        Thread.sleep(8000);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
+        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                while (isRefresh){
+                    if (binder!=null){
+                        getSwitchState();
+                    }
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
     Handler handler = new Handler(){
         @Override
@@ -226,8 +227,19 @@ public class RoadBulb_Activity extends AppCompatActivity{
         if (actionBar!=null){
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_back_normal);
             textView.setText("路灯");
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+              finish();
+                break;
+        }
+        return true;
     }
 
     /**
@@ -251,14 +263,23 @@ public class RoadBulb_Activity extends AppCompatActivity{
             }
             s=Converts.Bytes2HexString(bytes);
             s= s.split("0d0a")[0]+"0d0a";
+            s=s.toLowerCase();
             if (s.length()>20){
-                s=s.substring(2,s.length());
+                if (MainService1.IsInnerNet){
+                    if (!s.substring(0,6).equals("f7aa69"))
+                        return;
+                    s=s.substring(2,s.length());
+                }else {
+                    if (!s.substring(0,20).equals("020000ff00571f97aa69"))
+                        return;
+                    s=s.substring(16,s.length());
+                }
                 return_addr = s.substring(4,12);   //返回数据的开关地址
                 System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:"+s);
                 byte a[] = Converts.HexString2Bytes(s);
                 if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
                 {
-                    if (s.substring(14, 16).equals("0E")||s.substring(14,16).equals("07"))
+                    if (s.substring(14, 16).equals("0e")||s.substring(14,16).equals("07"))
                     {
                         String[] states={"0","0","0","0","0","0","0","0","0","0"};   //十个通道的状态，state[0]对应1通道
                         for(int i=0;i<8;i++)   //先获取前八位的开关状态
@@ -282,7 +303,7 @@ public class RoadBulb_Activity extends AppCompatActivity{
                 {
                     int k=0;         //k是通道号
                     int state=Integer.valueOf(s.substring(21, 22));  //开关状态，1代表打开，0代表关闭
-                    if(s.substring(17,18).equals("A"))
+                    if(s.substring(17,18).equals("a"))
                         k=10;
                     else
                         k=Integer.valueOf(s.substring(17, 18));   //通道号,int型
@@ -311,6 +332,7 @@ public class RoadBulb_Activity extends AppCompatActivity{
                     }
                     refreshLayout.setRefreshing(false);
                     UiUtils.showToast(UiUtils.getContext(),"刷新成功！");
+                    showSuccessDialog();
                     adapter.notifyDataSetChanged();
                 }
             }
@@ -318,6 +340,41 @@ public class RoadBulb_Activity extends AppCompatActivity{
         }
     };//广播接收器
 
+    private LoadingDialog dialog;
+    private int which = 100;//1表示成功 100表示成功界面显示完毕
+    // 显示成功发送命令时候的dialog
+    private void showSuccessDialog() {
+        which=1;
+        dialog.setTipTextView("成功");
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (dialog.isShowing())
+                dialog.dismiss();
+                which=100;
+            }
+        }, 500);
+    }
 
+    // 显示点击按钮发送命令时候的dialog，2s后无回应则认为执行失败
+    private void showFailedDialog() {
+        dialog.show();
+        dialog.setTipTextView("执行中...");
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (which==100){
+                    dialog.setTipTextView("执行失败");
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            dialog.dismiss();
+                            which=100;
+                        }
+                    }, 500);
+                }
+            }
+        }, 2000);
+    }
 
 }

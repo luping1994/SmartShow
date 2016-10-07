@@ -18,7 +18,7 @@ public class SmartSwitch extends Device {
     private String[] ChannelState=new String[]{"0","0","0","0","0","0","0","0","0","0","0"};   //开关状态，依次是总开关，通道1，通道2，。。。通道10
     private String[] ChannelName=new String[]{"通道1","通道2","通道3","通道4","通道5","通道6","通道7","通道8","通道9","通道10"};   //10个通道的名称
     private Bitmap[] ChannelImg=new Bitmap[]{null,null,null,null,null,null,null,null,null,null};    //10个通道的图标
-
+    private String[] AreaName= {"","","","","","","","","",""};//各个通道所属的区域
     /**三个构造函数****/
     public SmartSwitch(){        
         this("","");
@@ -42,8 +42,19 @@ public class SmartSwitch extends Device {
         MaxI=0;
     }
 
+    public void setAreaName(int channel,String name){
+        AreaName[channel] = name;
+    }
 
-
+    public void setAreaName(String[] names){
+        AreaName = names;
+    }
+    public String[] getAreaName(){
+        return AreaName;
+    };
+    public String getAreaName(int channel){
+        return AreaName[channel];
+    }
     public double getIValue() {
         return IValue;
     }

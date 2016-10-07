@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -31,6 +32,7 @@ import com.suntrans.smartshow.adapter.RecyclerViewDivider;
 import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.StatusBarCompat;
 import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
 
@@ -84,7 +86,7 @@ public class IndustryState_Activity extends AppCompatActivity {
         IntentFilter filter_dynamic = new IntentFilter();
         filter_dynamic.addAction("com.suntrans.beijing.RECEIVE");  //为IntentFilter添加Action，接收的Action与发送的Action相同时才会出发onReceive
         registerReceiver(broadcastreceiver, filter_dynamic);    //动态注册broadcast receiver
-
+        StatusBarCompat.compat(this, Color.TRANSPARENT);
         setContentView(R.layout.meter);
         initViews();
         initData();
@@ -142,10 +144,19 @@ public class IndustryState_Activity extends AppCompatActivity {
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
+                refreshLayout.setRefreshing(true);
                     if (binder!=null){
                         String order = "FE 68 09 01 00 12 14 20 68 1F 00";
                         binder.sendOrder(order,8);
-                        refresh=false;
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (refreshLayout.isRefreshing()){
+                                    refreshLayout.setRefreshing(false);
+                                    UiUtils.showToast(UiUtils.getContext(),"失败了，请重试！");
+                                }
+                            }
+                        },2000);
                     }
             }
         });
@@ -159,7 +170,7 @@ public class IndustryState_Activity extends AppCompatActivity {
                         binder.sendOrder(order,8);
                     }
                     try {
-                        Thread.sleep(7000);
+                        Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -361,9 +372,16 @@ public class IndustryState_Activity extends AppCompatActivity {
         public void onReceive (Context context, Intent intent){
             byte[] bytes = intent.getByteArrayExtra("Content");
             String s = Converts.Bytes2HexString(bytes);
-            if (s.substring(0,6).equals("F8FE68")){
-                s = s.substring(2,s.length());
-                LogUtil.i("三相电表数据为:"+s);
+            s=s.toLowerCase();
+            if (MainService1.IsInnerNet){
+                if (!s.substring(0,6).equals("f8fe68"))
+                    return;
+                    s = s.substring(2,s.length());
+            }else {
+                if (!s.substring(0,20).equals("020000ff00571f98fe68"))
+                    return;
+                s = s.substring(16,s.length());
+            }
                 a=Converts.HexString2Bytes(s);
                 final String return_addr=s.substring(4,16);  //反向电表表号
                 double VA = (Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[12] & 0xff) - 51)})) * 100 + Integer.valueOf(Converts.Bytes2HexString(new byte[]{(byte) ((a[11] & 0xff) - 51)}))) / 10.0;  //A相电压。单位是V
@@ -396,7 +414,6 @@ public class IndustryState_Activity extends AppCompatActivity {
                         refreshLayout.setRefreshing(false);
                     }
                 });
-            }
         }
     };//广播接收器
 

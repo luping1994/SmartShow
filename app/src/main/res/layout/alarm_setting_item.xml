@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+   >
+    <TextView
+        android:background="@color/bg_color"
+        android:layout_width="match_parent"
+        android:layout_height="50dip" />
+    <LinearLayout
+        android:background="@color/white"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:layout_height="50dip">
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:text="温度"
+            android:textColor="@color/black"
+            android:gravity="center|left"
+            android:paddingLeft="15dp"
+            android:textSize="19sp"/>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent">
+            <com.suntrans.smartshow.views.Switch
+                android:id="@+id/switch1"
+                android:layout_gravity="center"
+                android:layout_marginLeft="25dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:textColor="@color/black"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="阈值:"
+            android:textSize="19sp"
+            android:gravity="center"
+            android:layout_marginLeft="40sp"/>
+        <TextView
+            android:layout_weight="1"
+            android:cursorVisible="true"
+            android:textSize="19sp"
+            android:textCursorDrawable="@null"
+            android:inputType="numberSigned"
+            android:id="@+id/value"
+            android:layout_width="0dp"
+            android:text="2000"
+            android:gravity="center"
+            android:textColor="@color/blue"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+</LinearLayout>

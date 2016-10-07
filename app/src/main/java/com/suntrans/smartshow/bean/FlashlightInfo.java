@@ -17,8 +17,9 @@ public class FlashlightInfo {
     private double out_power;//输出功率
     private double tem;//温度
     private double light;//光照强度
-    private double k;//能耗比
 
+
+    private double k;//能耗比
     public boolean isOpen() {
         return open;
     }
@@ -28,7 +29,7 @@ public class FlashlightInfo {
     }
 
     private boolean open;//总开关状态
-    private int grade;//光照等级
+    private String grade;//光照等级
 
     public FlashlightInfo() {
        open = true;
@@ -124,11 +125,11 @@ public class FlashlightInfo {
 
 
 
-    public int getGrade() {
+    public String getGrade() {
         return grade;
     }
 
-    public void setGrade(int grade) {
+    public void setGrade(String grade) {
         this.grade = grade;
     }
 }

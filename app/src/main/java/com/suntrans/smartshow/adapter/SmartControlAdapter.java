@@ -46,7 +46,7 @@ public class SmartControlAdapter extends RecyclerView.Adapter {
         public void onBindViewHolder (final RecyclerView.ViewHolder holder, final int position){
 
             Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(),imageId[position]);
-            bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
+            bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(10));
             ((viewHolder1)holder).image.setImageBitmap(bitmap);
             ((viewHolder1)holder).image.setOnClickListener(new View.OnClickListener() {
                 @Override

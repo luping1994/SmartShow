@@ -32,22 +32,20 @@ import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.base.BaseActivity1;
-import com.suntrans.smartshow.service.SmartHomeService;
+import com.suntrans.smartshow.service.MainService1;
+import com.suntrans.smartshow.service.MainService2;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
 import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
+import com.suntrans.smartshow.views.LoadingDialog;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.R.attr.id;
-import static android.R.attr.order;
 import static android.media.CamcorderProfile.get;
-import static com.suntrans.smartshow.R.layout.progressdialog;
 import static com.suntrans.smartshow.R.layout.smartroom_detail_activity;
 
 
@@ -68,16 +66,18 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
     private String road_addr3 = "00010003";
     private  byte[] bits={(byte)0x01,(byte)0x02,(byte)0x04,(byte)0x08,(byte)0x10,(byte)0x20,(byte)0x40,(byte)0x80};     //从1到8只有一位是1，用于按位与计算，获取某一位的值
     private ArrayList<Map<String, String>> data = new ArrayList<>();//存储各个通道的名称和当前状态
-    private  SmartHomeService.ibinder binder;  //用于Activity与Service通信
+    private  MainService2.ibinder binder;  //用于Activity与Service通信
     private ProgressDialog progressdialog;
-    private String which;
     private int area;
+    boolean isrun = true;
+    Handler handler = new Handler();
+    private mAdapter adapter;
     private ServiceConnection con = new ServiceConnection() {
         //绑定服务成功后，调用此方法，获取返回的IBinder对象，可以用来调用Service中的方法
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LogUtil.i("绑定成功");
-            binder=(SmartHomeService.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
+            binder=(MainService2.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
             Log.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
         }
 
@@ -85,14 +85,14 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         public void onServiceDisconnected(ComponentName name) {
             Log.v("Time", "绑定失败");
         }
-    };   ///用
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
-        Intent intent1 = new Intent(getApplicationContext(), SmartHomeService.class);    //指定要绑定的service
+        Intent intent1 = new Intent(getApplicationContext(), MainService2.class);    //指定要绑定的service
         bindService(intent1, con, Context.BIND_AUTO_CREATE);   //绑定主service
         // 注册自定义动态广播消息。根据Action识别广播
         IntentFilter filter_dynamic = new IntentFilter();
@@ -100,7 +100,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         registerReceiver(broadcastreceiver, filter_dynamic);    //动态注册broadcast receiver
 
         StatusBarCompat.compat(this, Color.TRANSPARENT);//设置状态栏为透明颜色
-        setContentView(smartroom_detail_activity);
+        setContentView(R.layout.smartroom_detail_activity);
         //初始化控件
         initViews(savedInstanceState);
         //初始化ToolBar
@@ -112,6 +112,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
         Intent intent = getIntent();
         area = intent.getIntExtra("area", 0);
+        dialog = new LoadingDialog(this);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerview);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         tv_title = (TextView) findViewById(R.id.tv_title);
@@ -204,7 +205,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
                 Map<String, String> map12 = new HashMap<>();
                 map12.put("Name", "书房空调");
-                map12.put("Image", String.valueOf(R.drawable.ic_weibolu_off));
+                map12.put("Image", String.valueOf(R.drawable.ic_kongtiao_off));
                 map12.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 map12.put("state","0");
                 data.add(map12);
@@ -255,7 +256,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
                 Map<String, String> map19 = new HashMap<>();
                 map19.put("Name", "主卧灯");
-                map19.put("Image", String.valueOf(R.drawable.ic_chazuo_off));
+                map19.put("Image", String.valueOf(R.drawable.ic_bulb_off));
                 map19.put("dot",String.valueOf(R.drawable.ic_dot_off));
                 map19.put("state","0");
                 data.add(map19);
@@ -341,6 +342,23 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light,
                 android.R.color.holo_blue_light);
+        refreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                refreshLayout.setRefreshing(true);
+                if (binder!=null){
+                    getSwitchStateFromServer();
+                }
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                        }
+                    }
+                }, 2000);
+            }
+        });
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -362,22 +380,26 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 while (isrun){
                     if (binder!=null){
                         getSwitchStateFromServer();
-                        isrun=false;
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
         });
     }
-    boolean isrun = true;
-    Handler handler = new Handler();
-    private mAdapter adapter;
+
 
     public void initToolBar() {
+
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_back_normal);
             String title = "";//biaoti
             switch (area) {
                 case 0:title = "客厅"; break;
@@ -499,7 +521,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-
+        isrun =false;
         unregisterReceiver(broadcastreceiver);  //注销广播接收者
         unbindService(con);   //解除Service的绑定
         super.onDestroy();
@@ -529,6 +551,8 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 order = "aa68"+road_addr3+"03 0100"+"0007";
                 binder.sendOrder(order,2);
                 break;
+            //aa68000100030301000007cf310d0a
+            // ab68aa68000100030301000007cf310d0a
 
         }
     }
@@ -548,13 +572,22 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             }
             s = Converts.Bytes2HexString(bytes);
             s = s.split("0d0a")[0] + "0d0a";
+            s=s.toLowerCase();
+            if (MainService2.isInnerNet1){
+//                if (!s.substring(0,8).equals("aa690001"))
+//                    return;
+            }else {
+//                if (!s.substring(0,12).equals("ab68aa690001"))
+//                    return;
+                s=s.substring(4,s.length());
+            }
             if (s.length() > 20) {
                 return_addr = s.substring(4, 12);   //返回数据的开关地址
                 System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:" + s);
                 byte a[] = Converts.HexString2Bytes(s);
                 if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
                 {
-                    if (s.substring(14, 16).equals("0E") || s.substring(14, 16).equals("07")) {
+                    if (s.substring(14, 16).equals("0e") || s.substring(14, 16).equals("07")) {
                         String[] states = {"0", "0", "0", "0", "0", "0", "0", "0", "0", "0"};   //十个通道的状态，state[0]对应1通道
                         for (int i = 0; i < 8; i++)   //先获取前八位的开关状态
                         {
@@ -581,7 +614,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                 {
                     int k = 0;         //k是通道号
                     int state = Integer.valueOf(s.substring(21, 22));  //开关状态，1代表打开，0代表关闭
-                    if (s.substring(17, 18).equals("A"))
+                    if (s.substring(17, 18).equals("a"))
                         k = 10;
                     else
                         k = Integer.valueOf(s.substring(17, 18));   //通道号,int型
@@ -609,7 +642,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 //                                    System.out.println("当前通道"+state1.get(i).get("state"));
                                 }else if (return_addr.equals("00010002")){
                                     state2.get(i).put("state", state == 1 ? "1" : "0");
-                                    LogUtil.i("当前通道"+state1.get(i).get("state"));
+//                                    LogUtil.i("当前通道"+state1.get(i).get("state"));
                                 }else if (TextUtils.equals(return_addr,road_addr3)){
                                     state3.get(i).put("state", state == 1 ? "1" : "0");
                                 }
@@ -684,7 +717,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                         //更新保存的应显示的图片
                         data.get(0).put("Image",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_bulb_off:R.drawable.ic_bulb_on));
                         data.get(1).put("Image",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_hotwater_off:R.drawable.ic_hotwater_on));
-                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_chazuo_off:R.drawable.ic_computer_on));
+                        data.get(2).put("Image",String.valueOf((data.get(2).get("state").equals("0"))?R.drawable.ic_chazuo_off:R.drawable.ic_chazuo_on));
 
                         data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
                         data.get(1).put("dot",String.valueOf((data.get(1).get("state").equals("0"))?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
@@ -742,16 +775,14 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
                         data.get(0).put("dot",String.valueOf(TextUtils.equals(data.get(0).get("state"),"0")?R.drawable.ic_dot_off:R.drawable.ic_dot_on));
                     }
-                //发送消息通知processbar dismiss
-                Message msg3 = new Message();
-                msg3.what=0;
-                handler2.sendMessage(msg3);
                 if (adapter != null) {
+                    showSuccessDialog();
                     UiUtils.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            if (refreshLayout.isRefreshing())
                             refreshLayout.setRefreshing(false);
-                            UiUtils.showToast(UiUtils.getContext(), "sucess！");
+//                            UiUtils.showToast(UiUtils.getContext(), "success！");
                             adapter.notifyDataSetChanged();
                         }
                     });
@@ -765,15 +796,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
 
 
     private void parseClick(View v, int position) {
-        Message msg = new Message();
-        msg.what=1;
-        handler2.sendMessage(msg);
-
-        Message msg2 = new Message();
-        msg2.what=2;
-        handler2.sendMessage(msg2);
-
-        time = new Date().getTime();
+       showFailedDialog();
         if (area==0){
             switch (position){//客厅对应1号开关2，6，7，8通道
                 case 0:
@@ -945,7 +968,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     if(data.get(0).get("state").equals("0")){
                         binder.sendOrder("aa68" +road_addr1+"06 0301 0001",2);
                     }else {
-                        binder.sendOrder("aa68"+road_addr3+"06 0301 0000",2);
+                        binder.sendOrder("aa68"+road_addr1+"06 0301 0000",2);
                     }
                     break;
                 case 1:
@@ -963,7 +986,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     }
                     break;
                 case 3:
-                    if(data.get(2).get("state").equals("0")){
+                    if(data.get(3).get("state").equals("0")){
                         binder.sendOrder("aa68" +road_addr1+"06 0305 0001",2);
                     }else {
                         binder.sendOrder("aa68"+road_addr1+"06 0305 0000",2);
@@ -985,58 +1008,41 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         }
     }
 
+    private LoadingDialog dialog;
+    private int which = 100;//1表示成功 100表示成功界面显示完毕
+    // 显示成功发送命令时候的dialog
+    private void showSuccessDialog() {
+        which=1;
+        dialog.setTipTextView("成功");
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (dialog.isShowing())
+                    dialog.dismiss();
+                which=100;
+            }
+        }, 500);
+    }
 
-
-    private long time;
-    private Handler handler2=new Handler()   //用来控制progressdialog的显示和销毁
-    {
-        public void handleMessage(Message msg)
-        {
-            super.handleMessage(msg);
-            if(msg.what==0)   //如果是要关闭progresedialog的显示（收到相应通道的反馈，则进行此操作）
-            {
-                if(progressdialog!= null)
-                {
-                    progressdialog.dismiss();
-                    progressdialog=null;
+    // 显示点击按钮发送命令时候的dialog，2s后无回应则认为执行失败
+    private void showFailedDialog() {
+        dialog.show();
+        dialog.setTipTextView("执行中...");
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (which==100){
+                    dialog.setTipTextView("执行失败");
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            dialog.dismiss();
+                            which=100;
+                        }
+                    }, 500);
                 }
-                //which="100";
             }
-            else if(msg.what==1)   //是要显示progressdialog
-            {
-                progressdialog = new ProgressDialog(SmartRoomDetails_Activity.this);    //初始化progressdialog
-                progressdialog.setCancelable(true);// 设置是否可以通过点击Back键取消
-                progressdialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条
-                progressdialog.setMessage("loading...");
-                progressdialog.show();
-                progressdialog.setContentView(R.layout.progressdialog);    //设置显示的内容
-            }
-            else if(msg.what==2)   //如果是要根据时间判断是否关闭progressdialog的显示，用于通讯条件不好，收不到反馈时
-            {
-                if(new Date().getTime()-time>=1900)
-                {
-                    if(progressdialog!= null)
-                    {
-                        progressdialog.dismiss();
-                        progressdialog=null;
-                    }
-                    if(!which.equals("100"))
-                    {
-                        which="100";
-                        Toast.makeText(SmartRoomDetails_Activity.this, "网络错误！", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-            }
-            else   //如果是要显示progressdialog
-            {
-                progressdialog = new ProgressDialog(SmartRoomDetails_Activity.this);    //初始化progressdialog
-                progressdialog.setCancelable(true);// 设置是否可以通过点击Back键取消
-                progressdialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条
-                progressdialog.show();
-                progressdialog.setContentView(R.layout.progressdialog);    //设置显示的内容
-            }
-        }
-    };
+        }, 3000);
+    }
 }
 

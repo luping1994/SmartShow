@@ -26,6 +26,8 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import static android.R.attr.x;
+
 
 /**
  * Create by 1111b on 2015/12/12.
@@ -41,21 +43,23 @@ public class MainService1 extends Service {
     private NetworkInfo netInfo;
     public static int SWITCH=2;      //开关代号
     public static int SIXSENSOR=4;   //第六感代号
+    public static int AMMETER=3;   //电表
+    public static int WATERMETER=6;   //水表
 
     public Socket sixClient=null;    //保持TCP连接的第六感socket
     public String SixSensorip;     //第六感IP
     public int sixPort;    //第六感端口
     private String Addr="0001";    //第六感官的地址，从0000到ffff。跟用户名相对应
 
-    boolean IsInnerNet = true;//是否是内网
+    public static boolean IsInnerNet ;//是否是内网
 
     @Override   //当activity与service绑定的时候会调用此方法
     public IBinder onBind(Intent intent) {
         Log.v("Service", "ServiceDemo onBind");
 
-
         Log.i("Intenet", "串口ip==>" + serverip);
         LogUtil.i("Intenet", "第六感ip==>" + SixSensorip);
+        LogUtil.i("Intenet", "串口port==>" + port);
         if(client==null)   //如果client为空，则建立连接
             new Thread(){      //不能在主线程中访问网络，所以要新建线程
                 public void run(){   //新建线程连接服务器，不占用主线程
@@ -73,11 +77,11 @@ public class MainService1 extends Service {
                         // 把用户输入的内容发送给server
                         //String toServer = "ab68 F006 0500 000a 14 0001 0002 0003 0004 0005 0006 0007 0008 0009 000a";    //查询开关所有通道的状态
                         String toServer="ab70 "+SerialNumber;  //发送手机地址
-                        toServer.replace(" ","");    //去掉空格
+                        toServer = toServer.replace(" ","");    //去掉空格
                         byte[] bt=null;
                         bt= Converts.HexString2Bytes(toServer);
-                        String str=toServer+Converts.GetCRC(bt, 2, bt.length);   //添加校验码
-                        Log.i("Order",str);
+                        String str=toServer+Converts.GetCRC(bt, 0, bt.length);   //添加校验码
+                        Log.i("外网校验码",str);
                         byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                         if(!client.isClosed())
                         {
@@ -118,7 +122,7 @@ public class MainService1 extends Service {
                         byte[] bt=null;
                         bt= Converts.HexString2Bytes(toServer);
                         String str=toServer+Converts.GetCRC(bt, 2, bt.length);   //添加校验码
-                        Log.i("Order",str);
+                        Log.i("外网校验码2",str);
                         byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                         if(!sixClient.isClosed())
                         {
@@ -154,21 +158,57 @@ public class MainService1 extends Service {
                             byte[] bt=null;
                             bt=Converts.HexString2Bytes(toServer);
                             String str="";
-                            if(dev==SWITCH)//路灯
-                                str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                            if (dev==SIXSENSOR)//第六感
+                            {
+                                if (IsInnerNet)
+                                    str= toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                else
+                                    str= "ab68"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";//外网添加前缀ab68协议
+                            }
+                            else if (dev==SWITCH)//路灯
+                            {
+                                if (IsInnerNet)
+                                    str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                else
+                                    str ="02 00 00 ff 00 57 1f 97"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //外网添加前缀协议
+                            }
                             else if (dev==3)//电表
-                                str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                if (IsInnerNet){
+                                    str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                }else {
+                                    str ="02 00 00 ff 00 57 1f 91"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表外网添加前面的协议
+                                }
                             else if (dev==9)//智能家居这边的电表
-                                str ="f2"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
-                            else if (dev==6)//水表
-                                str = "f3"+toServer+"16";
-                            else if (dev==5)//氙气灯
-                                str ="f5"+toServer;
+                                if (IsInnerNet){
+                                    str ="f2"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                }else {
+                                    str ="02 00 00 ff 00 57 1f 92"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                }
+                            else if (dev==6)//水表,热量表，气表 //水表 气表 热量表 校验码已经在activity算好
+                            {   if (IsInnerNet)
+                                    str = "f3"+toServer+"16";
+                                else
+                                    str = "02 00 00 ff 00 57 1f 93"+toServer+"16";
+                            }
+                            else if (dev==5)//氙气灯，三相电动机
+                            {   if (IsInnerNet)
+                                    str ="f5"+toServer;
+                                else
+                                   str ="02 00 00 ff 00 57 1f 95"+toServer;
+                            }
                             else if (dev==7)
-                                str = toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
+                                str = ""+toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
                             else if (dev==8)//三相电表
-                                str ="f8"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                            {
+                                if (IsInnerNet)
+                                    str ="f8"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                                else
+                                    str ="02 00 00 ff 00 57 1f 98"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                            }
+
+                            str = str.replace(" ","");
                             Log.i("Order","发送数据："+str);
+                            str=str.replace(" ","");
                             byte[] bt1=Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                             if(!client.isClosed())
                                 if(client.isConnected())
@@ -206,7 +246,7 @@ public class MainService1 extends Service {
                                 toServer.replace(" ", "");    //去掉空格
                                 byte[] bt = null;
                                 bt = Converts.HexString2Bytes(toServer);
-                                String str = toServer + Converts.GetCRC(bt, 2, bt.length);   //添加校验码
+                                String str = toServer + Converts.GetCRC(bt, 0, bt.length);   //添加校验码
                                 byte[] bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                                 if (!client.isClosed())
                                 {
@@ -218,21 +258,51 @@ public class MainService1 extends Service {
                                 toServer=toServer.replace(" ", "");    //去掉空格
                                 bt = null;
                                 bt = Converts.HexString2Bytes(toServer);
-                                if(dev==SWITCH||dev==SIXSENSOR){//路灯
-                                    str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
-                                    LogUtil.i("service发送命令：="+str);
+                                if (dev==SIXSENSOR){
+                                    if (IsInnerNet)
+                                        str= toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                    else
+                                        str= "ab68"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";//外网添加前缀ab68协议
+                                }
+                                else if(dev==SWITCH){//路灯
+                                    if (IsInnerNet)
+                                        str="f7"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //添加校验码和包尾
+                                    else
+                                        str ="02 00 00 ff 00 57 1f 97"+toServer+Converts.GetCRC(bt, dev, bt.length)+"0d0a";   //外网添加前缀协议
                                 } else if (dev==3)//电表
-                                    str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                    if (IsInnerNet){
+                                        str ="f1"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                    }else {
+                                        str ="02 00 00 ff 00 57 1f 91"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表外网添加前面的协议
+                                    }
                                 else if (dev==9)//智能家居这边的电表
-                                    str ="f2"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
-                                else if (dev==6)//水表
-                                    str = "f3"+toServer+"16";
+                                    if (IsInnerNet){
+                                        str ="f2"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                    }else {
+                                        str ="02 00 00 ff 00 57 1f 92"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //电表，添加校验和结束符
+                                    }
+                                else if (dev==6)//水表 气表 热量表 校验码已经在activity算好
+                                    if (IsInnerNet){
+                                        str = "f3"+toServer+"16";
+                                    }else {
+                                        str = "02 00 00 ff 00 57 1f 93"+toServer+"16";
+                                    }
                                 else if (dev==5)//氙气灯
-                                    str ="f5"+toServer;
+                                {   if (IsInnerNet)
+                                        str ="f5"+toServer;
+                                    else
+                                        str ="02 00 00 ff 00 57 1f 95"+toServer;
+                                }
                                 else if (dev==7)
                                     str = toServer+Converts.getMeterCS(bt,2,bt.length)+"0d0a";
                                 else if (dev==8)//三相电表
-                                    str ="f8"+toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                                {
+                                    if (IsInnerNet)
+                                        str = "f8" + toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";  //
+                                    else
+                                        str = "02 00 00 ff 00 57 1f 98" + toServer + Converts.getMeterCS(bt, 1, bt.length) + "16";
+                                }
+                                str = str.replace(" ","");
                                 LogUtil.i("service发送命令：="+str);
                                 bt1 = Converts.HexString2Bytes(str);      //将完整的命令转换成十六进制
                                 if (!client.isClosed()) {
@@ -252,6 +322,9 @@ public class MainService1 extends Service {
 
             @Override
             public boolean sendOrder2Sixsenor(final String order, final int dev) {
+                if (IsInnerNet==false){//外网的话就直接共用一个发命令进程就行了
+                    sendOrder(order,4);
+                }else
                 new Thread()   //新建子线程，发送命令
                 {
 
@@ -349,11 +422,12 @@ public class MainService1 extends Service {
     public void onCreate() {
         Log.v("Service", "ServiceDemo onCreate");
 
-        SixSensorip  = BaseApplication.getSharedPreferences().getString("sixIpAddress","null");
+        SixSensorip = BaseApplication.getSharedPreferences().getString("sixIpAddress","null");
         sixPort = BaseApplication.getSharedPreferences().getInt("sixPort",-1);
 
-        serverip =BaseApplication.getSharedPreferences().getString("chunkouIpAddress","null");
-        port = BaseApplication.getSharedPreferences().getInt("null",8000);
+        serverip = BaseApplication.getSharedPreferences().getString("chunkouIpAddress","null");
+        port = BaseApplication.getSharedPreferences().getInt("chunkouPort",8000);
+
         if (serverip.equals("192.168.1.213")){
             IsInnerNet =  true;
         }else {
@@ -458,7 +532,7 @@ public class MainService1 extends Service {
                                     {
                                         //电表通讯协议中包尾是16，不是0d0a，此处加上0d0a不影响电表数据的解析，因为解析的时候没有计算校验
                                         byte[] tem=Converts.HexString2Bytes(str+"0d0a");   //转换成byte数组
-                                        if(tem.length>=14) {
+                                        if(tem.length>8) {
                                             Intent intent = new Intent();
                                             intent.setAction("com.suntrans.beijing.RECEIVE");
                                             intent.putExtra("ContentNum", tem.length);   //数组长度

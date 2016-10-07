@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:clipToPadding="true"
+    android:background="@color/bg_action"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:background="@color/bg_color"
+        android:layout_height="match_parent">
+        <include
+            layout="@layout/toolbar"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50dip" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_bt1"
+            android:layout_height="50dip">
+            <TextView
+                android:background="@drawable/bg_bt1"
+                android:id="@+id/tv_baojing"
+                android:gravity="center_vertical"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="50dip"
+                android:textSize="17sp"
+                android:textColor="@color/gray"
+                android:text="报警配置"
+                android:paddingLeft="15dip"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50dip" />
+        <TextView
+            android:id="@+id/tv_yuyin"
+            android:background="@drawable/bg_bt1"
+            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="50dip"
+            android:textSize="17sp"
+            android:textColor="@color/gray"
+            android:text="语音配置"
+            android:paddingLeft="15dip"/>
+    </LinearLayout>
+
+
+</LinearLayout>

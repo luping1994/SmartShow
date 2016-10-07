@@ -17,6 +17,7 @@ import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.utils.UiUtils;
+import com.suntrans.smartshow.views.LoadingDialog;
 
 import java.util.ArrayList;
 import java.util.HashMap;

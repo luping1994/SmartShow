@@ -1,15 +1,22 @@
 package com.suntrans.smartshow.activity;
 
 import android.app.Application;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -18,6 +25,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -26,7 +35,10 @@ import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.base.BaseActivity;
 import com.suntrans.smartshow.base.BaseActivity1;
+import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.utils.RxBus;
+import com.suntrans.smartshow.utils.StatusBarCompat;
+import com.suntrans.smartshow.utils.SystemBarTintManager;
 import com.suntrans.smartshow.views.MySlidingMenu;
 
 import java.util.ArrayList;
@@ -39,7 +51,7 @@ import static com.suntrans.smartshow.R.drawable.control;
 /**
  * 主页面
  */
-public class Main_Activity extends BaseActivity1 {
+public class Main_Activity extends AppCompatActivity {
     private MySlidingMenu slidingMenu;   //侧滑菜单控件
     private View main_menu;    //左边菜单栏
     private View main_content;    //右边主页面
@@ -52,17 +64,25 @@ public class Main_Activity extends BaseActivity1 {
     private Toolbar toolbar;
     private TextView tv_title;
     boolean i =true;
+    private TextView mode;//内外网模式显示
+    private  SystemBarTintManager tintManager;
     @Override
-    public int getLayoutId() {
-        return R.layout.main;
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        initViews();
+        initToolBar();
+        initData();
     }
-    @Override
-    public void initViews(Bundle savedInstanceState) {
+
+    public void initViews() {
+        StatusBarCompat.compat(this,Color.TRANSPARENT);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         slidingMenu=(MySlidingMenu)findViewById(R.id.slidingmenu);
         main_menu = findViewById(R.id.menu);
         main_content = findViewById(R.id.content);
         tv_title = (TextView) findViewById(R.id.tv_title);
+        mode = (TextView) findViewById(R.id.moshi);
         //菜单栏部分
         recyclerView=(RecyclerView)main_menu.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -112,7 +132,6 @@ public class Main_Activity extends BaseActivity1 {
         });
     }
 
-    @Override
     public void initToolBar() {
         setSupportActionBar(toolbar);
         final ActionBar actionBar = getSupportActionBar();
@@ -160,7 +179,6 @@ public class Main_Activity extends BaseActivity1 {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
     public void initData(){
         Map<String,String> map1=new HashMap<String,String>();
         map1.put("Name","主页");    //名称
@@ -186,6 +204,12 @@ public class Main_Activity extends BaseActivity1 {
         map6.put("Name","关于我们");    //名称
         map6.put("Image",String.valueOf(R.mipmap.ic_about));   //图标
         data.add(map6);
+
+        String ip = BaseApplication.getSharedPreferences().getString("chunkouIpAddress","null");
+        if (ip.equals("192.168.1.213"))
+            mode.setText("当前模式:内网模式");
+        else
+            mode.setText("当前模式:外网模式");
     }
 
 
@@ -239,13 +263,59 @@ public class Main_Activity extends BaseActivity1 {
                                     break;
                                 }
                                 case 1:{
-
+                                    startActivity(new Intent(Main_Activity.this,OnlineDevices_Activity.class));
+                                    break;
                                 }
                                 case 2:{
 
+                                    AlertDialog dialog = new AlertDialog.Builder(Main_Activity.this)
+                                            .setTitle("提示")
+                                            .setMessage("你确定要切换到内网模式吗?")
+                                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    BaseApplication.getSharedPreferences().edit().putString("sixIpAddress","192.168.1.235").commit();
+                                                    BaseApplication.getSharedPreferences().edit().putInt("sixPort",8000).commit();
+                                                    BaseApplication.getSharedPreferences().edit().putString("chunkouIpAddress","192.168.1.213").commit();
+                                                    BaseApplication.getSharedPreferences().edit().putInt("chunkouPort",8000).commit();
+                                                    dialog.dismiss();
+                                                    mode.setText("当前模式:内网模式");
+                                                    slidingMenu.toggleMenu();   //关闭侧滑
+                                                }
+                                            })
+                                            .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            }).create();
+                                    dialog.show();
+                                    break;
                                 }
                                 case 3:{
-
+                                    AlertDialog dialog = new AlertDialog.Builder(Main_Activity.this)
+                                            .setTitle("提示")
+                                            .setMessage("你确定要切换到外网模式吗?")
+                                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    BaseApplication.getSharedPreferences().edit().putString("sixIpAddress","61.235.65.160").commit();
+                                                    BaseApplication.getSharedPreferences().edit().putInt("sixPort",8286).commit();
+                                                    BaseApplication.getSharedPreferences().edit().putString("chunkouIpAddress","61.235.65.160").commit();
+                                                    BaseApplication.getSharedPreferences().edit().putInt("chunkouPort",8286).commit();
+                                                    dialog.dismiss();
+                                                    slidingMenu.toggleMenu();   //关闭侧滑
+                                                    mode.setText("当前模式:外网模式");
+                                                }
+                                            })
+                                            .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            }).create();
+                                    dialog.show();
+                                    break;
                                 }
                                 case 4:{
 
@@ -301,15 +371,5 @@ public class Main_Activity extends BaseActivity1 {
     }
 
 
-    public void regiset(){
-
-//发送广播
-//        Intent intent = new Intent();
-//        intent.setAction("com.suntrans.beijing.RECEIVE");
-//        intent.putExtra("ContentNum", tem.length);   //数组长度
-//        intent.putExtra("Content", tem);   //命令内容数组
-//        sendBroadcast(intent);   //发送广播，通知各个activity
-
-    }
 
 }

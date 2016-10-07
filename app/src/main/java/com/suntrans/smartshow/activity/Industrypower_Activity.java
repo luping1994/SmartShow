@@ -7,7 +7,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.base.BaseActivity;
 import com.suntrans.smartshow.base.BaseActivity1;
 
 /**
@@ -54,7 +53,7 @@ public class Industrypower_Activity extends BaseActivity1 implements View.OnClic
                 startActivity(new Intent(this,IndustryState_Activity.class));
                 break;
             case R.id.ll_con:
-                startActivity(new Intent(this,Industry_Activity.class));
+                startActivity(new Intent(this,MotorTriphase_Activity.class));
                 break;
         }
 

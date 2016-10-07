@@ -12,9 +12,9 @@ import com.suntrans.smartshow.R;
 
 public class BottomMentTab extends TabLayout {
     public static final int[] tabIcon_gray = new int[]{
-            R.mipmap.ic_lightintensity,
-            R.mipmap.ic_flow,
-            R.mipmap.ic_elecinfo};
+            R.mipmap.ic_lightintensity_off,
+            R.mipmap.ic_flow_off,
+            R.mipmap.ic_elecinfo_off};
 
     public static final int[] tabIcon_bule = new int[]{
             R.mipmap.ic_lightintensity,

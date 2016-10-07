@@ -47,6 +47,7 @@ import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
 import com.suntrans.smartshow.utils.UiUtils;
+import com.suntrans.smartshow.views.BottomMentTab;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class Smartroom_Activity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             LogUtil.i("绑定成功");
             binder=(MainService1.ibinder)service;
-            Log.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
+            LogUtil.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
         }
 
         @Override
@@ -121,12 +122,13 @@ public class Smartroom_Activity extends AppCompatActivity {
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                tab.setIcon(BottomMentTab.tabIcon_bule[tab.getPosition()]);
                 pager.setCurrentItem(tab.getPosition());
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-
+                tab.setIcon(BottomMentTab.tabIcon_gray[tab.getPosition()]);
             }
 
             @Override
@@ -157,6 +159,7 @@ public class Smartroom_Activity extends AppCompatActivity {
                 finish();
                 break;
             case R.id.setting:
+                startActivity(new Intent(Smartroom_Activity.this,Setting_Activity.class));
                 break;
             default:
                 break;
@@ -229,6 +232,7 @@ public class Smartroom_Activity extends AppCompatActivity {
                 content = content + s1;
             }
             content = content.replace(" ","");
+            content = content.toLowerCase();
             Map<String, Object> map = new HashMap<String, Object>();   //新建map存放要传递给主线程的数据
             map.put("data", data);    //客户端发回的数据
 
@@ -236,12 +240,22 @@ public class Smartroom_Activity extends AppCompatActivity {
             msg.what = count;
             msg.obj = map;
             if (count>10){
-                if (content.substring(0,8).equals("f2fefe68")){
-                    powerInfoFragment.handler.sendMessage(msg);
+                if (MainService1.IsInnerNet){
+                    if (content.substring(0,8).equals("f2fefe68")){
+                        powerInfoFragment.handler.sendMessage(msg);
+                    }
+                    if (content.substring(0,4).equals("ab68")){
+                        roomConditionFragment.handler1.sendMessage(msg);
+                    }
+                }else {
+                    if (content.substring(0,22).equals("020000ff00571f92fefe68")){
+                        powerInfoFragment.handler.sendMessage(msg);
+                    }
+                    if (content.substring(0,8).equals("ab68ab68")){
+                        roomConditionFragment.handler1.sendMessage(msg);
+                    }
                 }
-                if (content.substring(0,4).equals("ab68")){
-                    roomConditionFragment.handler1.sendMessage(msg);
-                }
+
             }
         }
     };//广播接收器

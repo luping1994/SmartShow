@@ -87,18 +87,20 @@ public class RoomConditionFragment extends BaseFragment {
             byte[] bytes = (byte[]) (map.get("data"));
             String s = Converts.Bytes2HexString(bytes);
             s = s.replace(" ", ""); //去掉空格
-            String[] single_str = s.split("0d0a");
-            String result = single_str[0] + "0d0a";
-            System.out.println("Fuck you!收到结果为==>" + result);
-            byte [] a = Converts.HexString2Bytes(result);
-            for (int i = 0; i < msg.what; i++) {
-                String s1 = Integer.toHexString((a[i] + 256) % 256);   //byte转换成十六进制字符串(先把byte转换成0-255之间的非负数，因为java中的数据都是带符号的)
-                if (s1.length() == 1)
-                    s1 = "0" + s1;
-                s = s + s1;
+            s=s.toLowerCase();
+            if (MainService1.IsInnerNet){
+                if (!s.substring(0,4).equals("ab68"))
+                    return;
+            }else {
+                if (!s.substring(0,8).equals("ab68ab68"))
+                    return;
+                s=s.substring(4,s.length());
             }
-            //   String crc=Converts.GetCRC(a, 2, msg.what-2-2);    //获取返回数据的校验码，倒数第3、4位是验证码，倒数第1、2位是包尾0d0a
+
+            s = s.split("0d0a")[0]+"0d0a";
+            byte[] a = Converts.HexString2Bytes(s);
             s = s.replace(" ", ""); //去掉空格
+            LogUtil.i("Fuck you!收到结果为==>" + s);
             //   Log.i("Order", "收到数据：" + s);
             int IsEffective = 1;    //指令是否有效，0表示无效，1表示有效；对于和第六感官通讯而言，包头为ab68的数据才有效
 
@@ -106,16 +108,16 @@ public class RoomConditionFragment extends BaseFragment {
             {
                 if (s.substring(10, 12).equals("04")||s.substring(10,12).equals("03"))   //如果是读寄存器状态，则判断是读寄存器1（室内参数），还是寄存器2（灯光信息）的状态
                 {
-                    if (s.substring(12, 14).equals("22")&&a.length>40)  //寄存器1，参数信息，长度34个字节
+                    if (s.substring(12, 14).equals("22") && a.length > 40)  //寄存器1，参数信息，长度34个字节
                     {
                         //计算得到各个参数的值，顺序是按寄存器顺序来的
-                        double tmp_old=((a[7] + 256) % 256) * 256 + (a[8] + 256) % 256;   //原始温度，即正常温度的100倍
-                        if(tmp_old>30000)
-                            tmp_old=tmp_old-65536;   //负温度值
-                        double tmp = tmp_old/ 100.0;   //温度
-                        double humidity = (((a[13] + 256) % 256) * 256 + (a[14] + 256) % 256) /10.0;   //湿度
-                        while(humidity>100)
-                            humidity=humidity/10.0;    //防止湿度出现大于100的数字
+                        double tmp_old = ((a[7] + 256) % 256) * 256 + (a[8] + 256) % 256;   //原始温度，即正常温度的100倍
+                        if (tmp_old > 30000)
+                            tmp_old = tmp_old - 65536;   //负温度值
+                        double tmp = tmp_old / 100.0;   //温度
+                        double humidity = (((a[13] + 256) % 256) * 256 + (a[14] + 256) % 256) / 10.0;   //湿度
+                        while (humidity > 100)
+                            humidity = humidity / 10.0;    //防止湿度出现大于100的数字
                         double atm = (((a[15] + 256) % 256) * 256 + (a[16] + 256) % 256) / 100.0;       //大气压
                         double arofene = (((a[17] + 256) % 256) * 256 + (a[18] + 256) % 256) / 1000.0;    //甲醛
                         double smoke = (((a[19] + 256) % 256) * 256 + (a[20] + 256) % 256);       //烟雾
@@ -124,10 +126,10 @@ public class RoomConditionFragment extends BaseFragment {
                         double pm1 = (((a[25] + 256) % 256) * 256 + (a[26] + 256) % 256);     //PM1
                         double pm25 = (((a[27] + 256) % 256) * 256 + (a[28] + 256) % 256);     //PM2.5
                         double pm10 = (((a[29] + 256) % 256) * 256 + (a[30] + 256) % 256);     //PM10
-                        double xdegree= (((a[33] + 256) % 256) * 256 + (a[34] + 256) % 256)/100.0;   //X轴角度
-                        double ydegree= (((a[35] + 256) % 256) * 256 + (a[36] + 256) % 256)/100.0;  //Y轴角度
-                        double zdegree= (((a[37] + 256) % 256) * 256 + (a[38] + 256) % 256)/100.0;   //水平角度
-                        double shake=(((a[39] + 256) % 256) * 256 + (a[40] + 256) % 256);   //振动强度
+                        double xdegree = (((a[33] + 256) % 256) * 256 + (a[34] + 256) % 256) / 100.0;   //X轴角度
+                        double ydegree = (((a[35] + 256) % 256) * 256 + (a[36] + 256) % 256) / 100.0;  //Y轴角度
+                        double zdegree = (((a[37] + 256) % 256) * 256 + (a[38] + 256) % 256) / 100.0;   //水平角度
+                        double shake = (((a[39] + 256) % 256) * 256 + (a[40] + 256) % 256);   //振动强度
 
                         String switch_shake = (a[32] & bits[0]) == bits[0] ? "1" : "0";     //振动报警开关状态
                         String switch_pm25 = (a[32] & bits[1]) == bits[1] ? "1" : "0";        //PM2.5报警开关状态
@@ -150,18 +152,18 @@ public class RoomConditionFragment extends BaseFragment {
 
                         data_posture.get(0).put("Value", String.valueOf(xdegree) + " °"); //x轴角度
                         data_posture.get(1).put("Value", String.valueOf(ydegree) + " °");  //y轴角度
-                        if(zdegree>10)
+                        if (zdegree > 10)
                             data_posture.get(2).put("Value", String.valueOf(zdegree) + " °(倾斜)");   //水平角度
                         else
                             data_posture.get(2).put("Value", String.valueOf(zdegree) + " °(正常)");   //水平角度
-                        data_posture.get(3).put("Value", String.valueOf(shake) );//振动强度
+                        data_posture.get(3).put("Value", String.valueOf(shake));//振动强度
 
-                        warning_state[0]=switch_shake;
-                        warning_state[1]=switch_pm25;
-                        warning_state[2]=switch_arofene;
-                        warning_state[3]=switch_smoke;
-                        warning_state[4]=switch_tmp;
-                        warning_state[5]=switch_person;  //人员报警开关
+                        warning_state[0] = switch_shake;
+                        warning_state[1] = switch_pm25;
+                        warning_state[2] = switch_arofene;
+                        warning_state[3] = switch_smoke;
+                        warning_state[4] = switch_tmp;
+                        warning_state[5] = switch_person;  //人员报警开关
                         //评估，空气质量部分
                         String eva = "null";//评估，优、良、轻度污染、中度污染、重度污染、严重污染
                         int progress = 0;//进度
@@ -303,8 +305,8 @@ public class RoomConditionFragment extends BaseFragment {
                             eva = "潮湿";
                             progress = (int) ((humidity - 70) / 30.0 * 100 / 3.0 + 200 / 3.0);
                         }
-                        if(progress>90)
-                            progress=90;
+                        if (progress > 90)
+                            progress = 90;
                         data_room.get(1).put("Evaluate", eva);     //湿度
                         data_room.get(1).put("Progress", String.valueOf(progress));
 
@@ -349,21 +351,20 @@ public class RoomConditionFragment extends BaseFragment {
                             @Override
                             public void run() {
                                 if (refreshLayout.isRefreshing())
-                                refreshLayout.setRefreshing(false);
+                                    refreshLayout.setRefreshing(false);
                                 adapter.notifyDataSetChanged();
                             }
                         });
 
-                    }
-                    else if(s.substring(12,14).equals("0C"))  //寄存器2，灯光信息，长度12个字节
+                    } else if (s.substring(12, 14).equals("0C"))  //寄存器2，灯光信息，长度12个字节
                     {
 //                   String s1 = "ab 68 00 01 f0 03 0c 00 01 00 45 00 01 00 45 00 01 00 4c 25 61 0d 0a";
-                        state_r=a[8]&0xff;    //红灯开关状态
-                        state_g=a[12]&0xff;     //绿灯开关状态
-                        state_b=a[16]&0xff;    //蓝灯开关状态
-                        progress_r=a[10]&0xff;     //红灯pwm大小
-                        progress_g=a[14]&0xff;     //绿灯PWM
-                        progress_b=a[18]&0xff;    //蓝灯PWM
+                        state_r = a[8] & 0xff;    //红灯开关状态
+                        state_g = a[12] & 0xff;     //绿灯开关状态
+                        state_b = a[16] & 0xff;    //蓝灯开关状态
+                        progress_r = a[10] & 0xff;     //红灯pwm大小
+                        progress_g = a[14] & 0xff;     //绿灯PWM
+                        progress_b = a[18] & 0xff;    //蓝灯PWM
                         //  ListInit();
 
                         map_state.put("state_r", String.valueOf(state_r));
@@ -373,7 +374,7 @@ public class RoomConditionFragment extends BaseFragment {
                         map_state.put("progress_r", String.valueOf(progress_r));
                         map_state.put("progress_g", String.valueOf(progress_g));
                         map_state.put("progress_b", String.valueOf(progress_b));
-                        System.out.println("红灯状态是"+state_r+"绿灯灯状态是"+state_b+"蓝灯状态是"+state_b+"进度条："+progress_b+" "+progress_g+" "+progress_r);
+                        System.out.println("红灯状态是" + state_r + "绿灯灯状态是" + state_b + "蓝灯状态是" + state_b + "进度条：" + progress_b + " " + progress_g + " " + progress_r);
                         UiUtils.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -381,9 +382,10 @@ public class RoomConditionFragment extends BaseFragment {
                             }
                         });
 
+                    }
                 }
                 else if(s.substring(10,12).equals("06"))   //如果是控制单个寄存器返回命令，则可能是报警信息，也可能是修改语音开关、报警开关返回的数据
-                {
+                {//AB 68 00 01 F0 06 030500014D6E0D0A0d0a
                     if(s.substring(12,16).equals("0305"))   //报警信息，判断是哪个参数在报警,a[8]是高八位，a[9]是低八位
                     {
                         String str_warning="";   //要报警的内容
@@ -469,7 +471,6 @@ public class RoomConditionFragment extends BaseFragment {
                     });
 
                 }
-            }
 
         }
         }
@@ -564,14 +565,14 @@ public class RoomConditionFragment extends BaseFragment {
                         if (((Smartroom_Activity)getActivity()).binder!=null){
                             ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order,4);
                             try {
-                                Thread.sleep(500);
+                                Thread.sleep(300);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             String order1 = "ab68"+addr+"f003 0200 0006";
                             ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order1,4);
+                            run=false;
                         }
-                        run=false;
                     }
                     try {
                         Thread.sleep(2000);
@@ -702,8 +703,10 @@ public class RoomConditionFragment extends BaseFragment {
                         @Override
                         public void run() {
                             if (refreshLayout.isRefreshing()){
-                                refreshLayout.setRefreshing(false);
-                                UiUtils.showToast(UiUtils.getContext(),"刷新失败，请重试！");
+                                if (refreshLayout.isRefreshing()){
+                                    refreshLayout.setRefreshing(false);
+                                    UiUtils.showToast(UiUtils.getContext(),"请求失败，请重试！");
+                                }
                             }
                         }
                     },2000);
@@ -712,14 +715,16 @@ public class RoomConditionFragment extends BaseFragment {
             new Thread(){
                 @Override
                 public void run() {
-                    ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order,4);
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    for (int i=0;i<3;i++){
+                        ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order,4);
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        String order1 = "ab68"+addr+"f003 0200 0006";
+                        ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order1,4);
                     }
-                    String order1 = "ab68"+addr+"f003 0200 0006";
-                    ((Smartroom_Activity)getActivity()).binder.sendOrder2Sixsenor(order1,4);
                 }
             }.start();
         }else {

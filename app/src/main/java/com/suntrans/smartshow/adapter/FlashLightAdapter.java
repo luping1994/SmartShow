@@ -77,9 +77,11 @@ public class FlashLightAdapter extends  RecyclerView.Adapter <RecyclerView.ViewH
             }
         }
 
-        public interface onSwitchListener{
-            void onChanged(Switch switchView, boolean isChecked);
-        }
+    public interface onSwitchListener{
+        void onChanged(Switch switchView, boolean isChecked);
+        void upButtonClick();
+        void lowButtonClick();
+    }
 
     public void setmOnSwitchListener(onSwitchListener mOnSwitchListener) {
         this.mOnSwitchListener = mOnSwitchListener;
@@ -161,7 +163,19 @@ public class FlashLightAdapter extends  RecyclerView.Adapter <RecyclerView.ViewH
             textView = (TextView) itemView.findViewById(R.id.text_level);
         }
         public void setData(int position){
-            textView.setText("6");
+            textView.setText(data.getGrade()+"级");
+            btLose.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mOnSwitchListener.lowButtonClick();
+                }
+            });
+            btUp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mOnSwitchListener.upButtonClick();
+                }
+            });
         }
     }
 

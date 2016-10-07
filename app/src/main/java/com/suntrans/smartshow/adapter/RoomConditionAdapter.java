@@ -172,6 +172,7 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
                     break;
                 case 6:
                     layout_per.setVisibility(View.GONE);
+                    layout_arrow.setVisibility(View.VISIBLE);
                     image.setVisibility(View.VISIBLE);
                     image.setImageResource(R.drawable.standard_smoke);
                     name.setText("烟雾");
@@ -211,7 +212,7 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
                     layout_per.setVisibility(View.GONE);
                     value.setText(data_room.get(2).get("Value"));
                     evaluate.setText(data_room.get(2).get("Evaluate"));
-                    progress =Integer.valueOf(data_room.get(1).get("Progress"));
+                    progress =Integer.valueOf(data_room.get(2).get("Progress"));
                     setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 11:
@@ -222,7 +223,7 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
                     name.setText("光线强度");
                     value.setText(data_room.get(4).get("Value"));
                     evaluate.setText(data_room.get(4).get("Evaluate"));
-                    progress =Integer.valueOf(data_room.get(1).get("Progress"));
+                    progress =Integer.valueOf(data_room.get(4).get("Progress"));
                     setPading(progress,layout_arrow,value);//根据进度设置padding
                     break;
                 case 12:

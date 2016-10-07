@@ -19,7 +19,7 @@
         android:layout_width="80dip"
         android:layout_height="20dip"
         android:textSize="15sp"
-        android:text="疝气灯"
+        android:text="氙气灯"
         android:textColor="@color/white"
         android:background="@drawable/round_text"/>
 

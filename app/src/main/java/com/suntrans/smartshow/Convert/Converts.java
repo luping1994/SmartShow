@@ -234,7 +234,6 @@ public abstract class Converts {
 
 	   //设置图片圆角
 	public static Bitmap toRoundCorner(Bitmap bitmap, int pixels) {
-		int dp =UiUtils.dip2px(150);
 //		int width = bitmap.getWidth();
 //		int height = bitmap.getHeight();
 //		float scX = (float) width/(float)dp;
