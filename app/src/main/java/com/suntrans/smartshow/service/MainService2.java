@@ -16,6 +16,7 @@ import android.util.Log;
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.UiUtils;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -29,7 +30,7 @@ import java.net.Socket;
 
 /**
  * Create by Looney on 2016/09/26.
- *  智能家居开关控制部分的service
+ *  智能家居开关控制部分的service,绑定此service的activity还有报警页面
  */
 public class MainService2 extends Service {
     public Socket client=null;    //保持TCP连接的socket
@@ -47,12 +48,12 @@ public class MainService2 extends Service {
 
     @Override   //当activity与service绑定的时候会调用此方法
     public IBinder onBind(Intent intent) {
-        Log.v("Service", "ServiceDemo onBind");
+        LogUtil.v("Service", "ServiceDemo onBind");
         SharedPreferences sharedPreferences= getSharedPreferences("data", Activity.MODE_PRIVATE);
 //        sixSensorIp =sharedPreferences.getString("sixSensorIp", "-1");   //读取服务器ip，若没有则是-1
 //        sixSensorPort= Integer.valueOf(sharedPreferences.getString("sixSensorPort", "8086"));
 
-        Log.i("Intenet", "sixSensorIp==>" + sixSensorIp);
+        LogUtil.i("Intenet", "sixSensorIp==>" + sixSensorIp);
         if(client==null)   //如果client为空，则建立连接
             new Thread(){      //不能在主线程中访问网络，所以要新建线程
                 public void run(){   //新建线程连接服务器，不占用主线程
@@ -157,6 +158,7 @@ public class MainService2 extends Service {
                                 {
                                     out.write(bt1);
                                     out.flush();
+                                    LogUtil.i("重启后的外网校验码："+str);
                                 }
                                 Thread.sleep(100);
                                 toServer =  order;    //指令，添加包头和第六感官地址
@@ -178,7 +180,7 @@ public class MainService2 extends Service {
                                 }
                             }
                             catch (Exception ee) {
-                                Log.i("Info", "client重启出错" + ee.toString());
+                                LogUtil.i("Info", "client重启出错" + ee.toString());
                             }
 
                         }
@@ -194,7 +196,7 @@ public class MainService2 extends Service {
 
     @Override   //只调用一次
     public void onCreate() {
-        Log.v("Service", "ServiceDemo onCreate");
+        LogUtil.v("Service", "ServiceDemo onCreate");
         //从本地获取ip地址。默认内网模式
         sixSensorIp = BaseApplication.getSharedPreferences().getString("sixIpAddress","null");
         sixSensorPort = BaseApplication.getSharedPreferences().getInt("sixPort",-1);
@@ -214,27 +216,27 @@ public class MainService2 extends Service {
 
     @Override
     public void onStart(Intent intent, int startId) {
-        Log.v("Service", "ServiceDemo onStart");
+        LogUtil.v("Service", "ServiceDemo onStart");
         super.onStart(intent, startId);
     }
 
     @Override   //会调用多次
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v("Service", "ServiceDemo onStartCommand");
+        LogUtil.v("Service", "ServiceDemo onStartCommand");
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.v("Service", "ServiceDemo OnUnbind");
+        LogUtil.v("Service", "ServiceDemo OnUnbind");
         return super.onUnbind(intent);
 
     }
 
     @Override
     public void onDestroy() {
-        Log.v("Service", "ServiceDemo OnDestroy");
+        LogUtil.v("Service", "ServiceDemo OnDestroy");
         if(myNetReceiver!=null){
             unregisterReceiver(myNetReceiver);   //注销接收网络变化的广播通知的广播接收器
         }
@@ -300,7 +302,7 @@ public class MainService2 extends Service {
                                             intent.putExtra("Content", tem);   //命令内容数组
                                             sendBroadcast(intent);   //发送广播，通知各个activity
                                         }
-                                        Log.i("Order", "收到数据：" + str+"0d0a");
+                                        LogUtil.i("Order", "收到数据：" + str+"0d0a");
                                     }
 
 
@@ -309,7 +311,7 @@ public class MainService2 extends Service {
                         }
                     }
                 }
-                Log.i("Info", "TCP接收监听退出");
+                LogUtil.i("Info", "TCP接收监听退出");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -346,30 +348,30 @@ public class MainService2 extends Service {
                     String name = netInfo.getTypeName();
 
                     if(netInfo.getType()== ConnectivityManager.TYPE_WIFI){
-                        Log.i("Internet","网络改变==>网络变成了wifi");
+                        LogUtil.i("Internet","网络改变==>网络变成了wifi");
                      //   Log.i("Internet", "状态：isClosed?" + String.valueOf(client.isClosed()) + "; isoutputshutdown?" + String.valueOf(client.isOutputShutdown()) +
                      //           "; isInputshutdown?" + String.valueOf(client.isInputShutdown()) + ";  有网？" + String.valueOf(ping()));
                         /////WiFi网络
                         if(client!=null) {
-                            Log.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
-                            Log.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
-                            Log.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
+                            LogUtil.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
+                            LogUtil.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
+                            LogUtil.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
                         }
                     }else if(netInfo.getType()== ConnectivityManager.TYPE_ETHERNET) {
                         /////有线网络
-                        Log.i("Internet", "网络改变==>网络变成了有线");
+                        LogUtil.i("Internet", "网络改变==>网络变成了有线");
 
                     }else if(netInfo.getType()== ConnectivityManager.TYPE_MOBILE) {
                         /////////3g网络
-                        Log.i("Internet", "网络改变==>网络变成了移动网");
+                        LogUtil.i("Internet", "网络改变==>网络变成了移动网");
                     }
                 } else {
                     ////////网络断开
-                        Log.i("Internet","网络改变==>网络断开");
+                        LogUtil.i("Internet","网络改变==>网络断开");
                     if(client!=null) {
-                        Log.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
-                        Log.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
-                        Log.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
+                        LogUtil.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
+                        LogUtil.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
+                        LogUtil.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
 
                     } //   Log.i("Internet", "状态：isClosed?" + String.valueOf(client.isClosed()) + "; isoutputshutdown?" + String.valueOf(client.isOutputShutdown()) +
                        //     "; isInputshutdown?" + String.valueOf(client.isInputShutdown()) + ";  有网？" + String.valueOf(ping()));
@@ -432,7 +434,7 @@ public class MainService2 extends Service {
             while ((content = in.readLine()) != null) {
                 stringBuffer.append(content);
             }
-            Log.d("------ping-----", "result content : " + stringBuffer.toString());
+            LogUtil.d("------ping-----", "result content : " + stringBuffer.toString());
             // ping的状态
             int status = p.waitFor();
             if (status == 0) {
@@ -446,7 +448,7 @@ public class MainService2 extends Service {
         } catch (InterruptedException e) {
             result = "InterruptedException";
         } finally {
-            Log.d("----result---", "result = " + result);
+            LogUtil.d("----result---", "result = " + result);
         }
         return false;
     }

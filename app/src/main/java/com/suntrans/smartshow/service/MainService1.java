@@ -14,8 +14,10 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.suntrans.smartshow.Convert.Converts;
+import com.suntrans.smartshow.activity.Meter_Activity;
 import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.MyObserver;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -34,6 +36,7 @@ import static android.R.attr.x;
  *  主串口服务器service，与服务器连接，监听服务器发送的消息，并广播。在用户登录成功时启动
  */
 public class MainService1 extends Service {
+
     public Socket client=null;    //保持TCP连接的串口服务器ip socket
     public String serverip;     //串口服务器IP
     public int port;    //串口服务器端口
@@ -417,7 +420,6 @@ public class MainService1 extends Service {
               //那么bind所具有的传递数据的功能也就体现不出来。返回值在onServiceConnected中的第二个参数
 
     }
-
     @Override   //只调用一次
     public void onCreate() {
         Log.v("Service", "ServiceDemo onCreate");
@@ -443,27 +445,27 @@ public class MainService1 extends Service {
 
     @Override
     public void onStart(Intent intent, int startId) {
-        Log.v("Service", "ServiceDemo onStart");
+        LogUtil.v("Service", "ServiceDemo onStart");
         super.onStart(intent, startId);
     }
 
     @Override   //会调用多次
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v("Service", "ServiceDemo onStartCommand");
+        LogUtil.v("Service", "ServiceDemo onStartCommand");
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.v("Service", "ServiceDemo OnUnbind");
+        LogUtil.v("Service", "ServiceDemo OnUnbind");
         return super.onUnbind(intent);
 
     }
 
     @Override
     public void onDestroy() {
-        Log.v("Service", "ServiceDemo OnDestroy");
+        LogUtil.v("Service", "ServiceDemo OnDestroy");
         if(myNetReceiver!=null){
             unregisterReceiver(myNetReceiver);   //注销接收网络变化的广播通知的广播接收器
         }
@@ -491,6 +493,8 @@ public class MainService1 extends Service {
         }
         super.onDestroy();   //调用父类onDestroy方法释放资源
     }
+
+
 
     public class TCPServerThread extends Thread   //监听服务器发回的信息
      {
@@ -539,7 +543,7 @@ public class MainService1 extends Service {
                                             intent.putExtra("Content", tem);   //命令内容数组
                                             sendBroadcast(intent);   //发送广播，通知各个activity
                                         }
-                                        Log.i("Order", "收到数据：" + str+"0d0a");
+                                        LogUtil.i("Order", "收到数据：" + str+"0d0a");
                                     }
 
 
@@ -548,7 +552,7 @@ public class MainService1 extends Service {
                         }
                     }
                 }
-                Log.i("Info", "TCP接收监听退出");
+                LogUtil.i("Info", "TCP接收监听退出");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -602,7 +606,7 @@ public class MainService1 extends Service {
                                             intent.putExtra("Content", tem);   //命令内容数组
                                             sendBroadcast(intent);   //发送广播，通知各个activity
                                         }
-                                        Log.i("Order", "收到数据：" + str+"0d0a");
+                                        LogUtil.i("Order", "收到数据：" + str+"0d0a");
                                     }
 
 
@@ -611,7 +615,7 @@ public class MainService1 extends Service {
                         }
                     }
                 }
-                Log.i("Info", "TCP接收监听退出");
+                LogUtil.i("Info", "TCP接收监听退出");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -658,30 +662,30 @@ public class MainService1 extends Service {
                     String name = netInfo.getTypeName();
 
                     if(netInfo.getType()== ConnectivityManager.TYPE_WIFI){
-                        Log.i("Internet","网络改变==>网络变成了wifi");
+                        LogUtil.i("Internet","网络改变==>网络变成了wifi");
                      //   Log.i("Internet", "状态：isClosed?" + String.valueOf(client.isClosed()) + "; isoutputshutdown?" + String.valueOf(client.isOutputShutdown()) +
                      //           "; isInputshutdown?" + String.valueOf(client.isInputShutdown()) + ";  有网？" + String.valueOf(ping()));
                         /////WiFi网络
                         if(client!=null) {
-                            Log.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
-                            Log.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
-                            Log.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
+                            LogUtil.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
+                            LogUtil.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
+                            LogUtil.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
                         }
                     }else if(netInfo.getType()== ConnectivityManager.TYPE_ETHERNET) {
                         /////有线网络
-                        Log.i("Internet", "网络改变==>网络变成了有线");
+                        LogUtil.i("Internet", "网络改变==>网络变成了有线");
 
                     }else if(netInfo.getType()== ConnectivityManager.TYPE_MOBILE) {
                         /////////3g网络
-                        Log.i("Internet", "网络改变==>网络变成了移动网");
+                        LogUtil.i("Internet", "网络改变==>网络变成了移动网");
                     }
                 } else {
                     ////////网络断开
-                        Log.i("Internet","网络改变==>网络断开");
+                        LogUtil.i("Internet","网络改变==>网络断开");
                     if(client!=null) {
-                        Log.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
-                        Log.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
-                        Log.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
+                        LogUtil.i("Internet", "isConnected==>" + String.valueOf(client.isConnected()));
+                        LogUtil.i("Internet", "isoutputShutdown==>" + String.valueOf(client.isOutputShutdown()));
+                        LogUtil.i("Internet", "isinputshutdowm==>" + String.valueOf(client.isInputShutdown()));
 
                     } //   Log.i("Internet", "状态：isClosed?" + String.valueOf(client.isClosed()) + "; isoutputshutdown?" + String.valueOf(client.isOutputShutdown()) +
                        //     "; isInputshutdown?" + String.valueOf(client.isInputShutdown()) + ";  有网？" + String.valueOf(ping()));
@@ -744,7 +748,7 @@ public class MainService1 extends Service {
             while ((content = in.readLine()) != null) {
                 stringBuffer.append(content);
             }
-            Log.d("------ping-----", "result content : " + stringBuffer.toString());
+            LogUtil.d("------ping-----", "result content : " + stringBuffer.toString());
             // ping的状态
             int status = p.waitFor();
             if (status == 0) {
@@ -758,7 +762,7 @@ public class MainService1 extends Service {
         } catch (InterruptedException e) {
             result = "InterruptedException";
         } finally {
-            Log.d("----result---", "result = " + result);
+            LogUtil.d("----result---", "result = " + result);
         }
         return false;
     }

@@ -1,15 +1,11 @@
 package com.suntrans.smartshow.base;
 
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.view.WindowManager;
 
 
-import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.utils.StatusBarCompat;
-import com.suntrans.smartshow.utils.SystemBarTintManager;
 
 
 /**

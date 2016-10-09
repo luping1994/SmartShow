@@ -18,7 +18,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,10 +29,9 @@ import android.widget.Toast;
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.adapter.RecyclerViewDivider;
-import com.suntrans.smartshow.base.BaseActivity1;
-import com.suntrans.smartshow.base.BaseApplication;
 import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.utils.LogUtil;
+import com.suntrans.smartshow.utils.MyObserver;
 import com.suntrans.smartshow.utils.StatusBarCompat;
 import com.suntrans.smartshow.utils.ThreadManager;
 import com.suntrans.smartshow.utils.UiUtils;
@@ -42,6 +40,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static android.os.Build.VERSION_CODES.M;
 
 
 /**
@@ -61,9 +61,9 @@ public class Meter_Activity extends AppCompatActivity {
     private  String  date;//日期
     public MainService1.ibinder binder;  //用于Activity与Service通信
     private String waterMeterAddr = "04 04 00 11 14 38 00";//水表反向地址
-    private String AmMeterAddr = "14 29 00 07 14 20";//电表反向地址
-    private String AirMeterAddr = "47 79 02 02 38 08 00";//气表反向地址
-    private String HotMeterAddr = "85 05 55 45 10 05 02";//热量表反向地址
+    private String amMeterAddr = "14 29 00 07 14 20";//电表反向地址
+    private String gasMeterAddr = "47 79 02 02 38 08 00";//气表反向地址
+    private String heatMeterAddr = "85 05 55 45 10 05 02";//热量表反向地址
     private ServiceConnection con = new ServiceConnection() {
         //绑定服务成功后，调用此方法，获取返回的IBinder对象，可以用来调用Service中的方法
         @Override
@@ -71,8 +71,6 @@ public class Meter_Activity extends AppCompatActivity {
             LogUtil.i("绑定成功");
             binder=(MainService1.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
             getDataFromServer();
-//  binder.sendOrder(addr+"f003 000e",4);
-            //    Log.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
         }
 
         @Override   //service因异常而断开的时候调用此方法
@@ -127,25 +125,9 @@ public class Meter_Activity extends AppCompatActivity {
                 finish();
             }
         });
-        refreshLayout.setColorSchemeResources(android.R.color.holo_green_light,
-                android.R.color.holo_orange_light,
-                android.R.color.holo_purple,
-                android.R.color.holo_blue_light);
-        refreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                refreshLayout.setRefreshing(true);
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (refreshLayout.isRefreshing()){
-                            refreshLayout.setRefreshing(false);
-                            Toast.makeText(Meter_Activity.this,"请求失败",Toast.LENGTH_SHORT);
-                        }
-                    }
-                },2000);
-            }
-        });
+
+        refreshLayout.setColorSchemeResources(R.color.bg_action);
+        refreshLayout.setSize(SwipeRefreshLayout.LARGE);
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -155,26 +137,31 @@ public class Meter_Activity extends AppCompatActivity {
                     public void run() {
                         if (refreshLayout.isRefreshing()){
                             refreshLayout.setRefreshing(false);
+                            UiUtils.showToast(UiUtils.getContext(),"连接失败,请重试！");
                         }
                     }
-                }, 2000);
+                }, 4000);
+            }
+        });
+        autoRefresh();//zidongshuaxinshuju
+        refreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                LogUtil.i("SBBBBBBBBBBBBBB==>POST方法被执行");
+                refreshLayout.setRefreshing(true);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                            Toast.makeText(Meter_Activity.this,"请求失败",Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                },6000);
             }
         });
         recyclerView.setAdapter(adapter);
-        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                while(isRefresh){
-                    if (binder!=null)
-                    getDataFromServer();
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+
     }
     Handler handler = new Handler();
     boolean isRefresh = true;
@@ -191,9 +178,9 @@ public class Meter_Activity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-//        rxsub.unsubscribe();
-        super.onPause();
+    protected void onResume() {
+        LogUtil.v("OnResume 被执行了");
+        super.onResume();
     }
 
     public void initData(){
@@ -290,6 +277,8 @@ public class Meter_Activity extends AppCompatActivity {
             default:break;
         }
     }
+
+
     /**
      * RecyclerView适配器
      **自定义Recyclerview的适配器,主要的执行顺序：getItemViewType==>onCreateViewHolder==>onBindViewHolder
@@ -403,16 +392,16 @@ public class Meter_Activity extends AppCompatActivity {
     private void getDataFromServer(){
         String order="";
         if (Meter_Type==1){
-            order = "FE 68 "+AmMeterAddr+" 68 1F 00";
+            order = "FE 68 "+amMeterAddr+" 68 1F 00";
             binder.sendOrder(order,3);
         }else if (Meter_Type==2){//水表
-            order ="68 10 "+waterMeterAddr+" 01 03 90 1F 00 90";
+            order ="68 10 "+waterMeterAddr+"01 03 90 1F 00 90";
             binder.sendOrder(order,6);
         }else if (Meter_Type==3){
-            order ="68 20 "+HotMeterAddr+" 01 03 90 1F 00 76";
+            order ="68 20 "+ heatMeterAddr +"01 03 90 1F 00 76";
             binder.sendOrder(order,6);
         }else{
-            order ="68 30 "+AirMeterAddr+" 01 03 90 1F 00 24";
+            order ="68 30 "+ gasMeterAddr +" 01 03 90 1F 00 24";
             binder.sendOrder(order,6);
         }
 
@@ -637,6 +626,8 @@ public class Meter_Activity extends AppCompatActivity {
         public void onReceive (Context context, Intent intent){
             int count = intent.getIntExtra("ContentNum", 0);   //byte数组的长度
             byte[] data = intent.getByteArrayExtra("Content");  //内容数组
+            String s = Converts.Bytes2HexString(data);
+
             if (Meter_Type==1){
                 refreshLayout.setRefreshing(false);
                 parseSingleMeter(data);
@@ -654,6 +645,22 @@ public class Meter_Activity extends AppCompatActivity {
         }
     };//广播接收器
 
-
+    private void  autoRefresh(){
+        ThreadManager.getInstance().createLongPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                LogUtil.i("自动刷新程序开始执行...");
+                while(isRefresh){
+                    try {
+                        if (binder!=null)
+                        getDataFromServer();
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
 
 }

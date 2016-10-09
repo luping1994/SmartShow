@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -275,15 +276,15 @@ public class Setting_voice_Activity extends AppCompatActivity{
                     title.setVisibility(View.GONE);
                 }
                 if (position<10){
-//                    setting.setTextColor(data1.get(position).get("VoiceName").equals("1")?0x0000ff:0x808080);
+                    setting.setTextColor(data1.get(position).get("VoiceName").equals("1")?Color.BLUE:Color.GRAY);
                     setting.setText(data1.get(position).get("VoiceName").equals("1")?"已配置":"未配置");
                     name.setText("通道"+data1.get(position).get("Channel")+"("+data1.get(position).get("ChannelName")+")");
                 }else if (position>=10&&position<20){
-//                    setting.setTextColor(data2.get(position-10).get("VoiceName").equals("1")?0x0000ff:0x808080);
+                    setting.setTextColor(data2.get(position-10).get("VoiceName").equals("1")?Color.BLUE:Color.GRAY);
                     setting.setText(data2.get(position-10).get("VoiceName").equals("1")?"已配置":"未配置");
                     name.setText("通道"+data2.get(position-10).get("Channel")+"("+data2.get(position-10).get("ChannelName")+")");
                 }else if (position>=20){
-//                    setting.setTextColor(data3.get(position-20).get("VoiceName").equals("1")?0x0000ff:0x808080);
+                    setting.setTextColor(data3.get(position-20).get("VoiceName").equals("1")?Color.BLUE:Color.GRAY);
                     setting.setText(data3.get(position-20).get("VoiceName").equals("1")?"已配置":"未配置");
                     name.setText("通道"+data3.get(position-20).get("Channel")+"("+data3.get(position-20).get("ChannelName")+")");
                 }
@@ -393,6 +394,9 @@ public class Setting_voice_Activity extends AppCompatActivity{
             s = Converts.Bytes2HexString(bytes);
             s = s.split("0d0a")[0] + "0d0a";
             s = s.toLowerCase();
+            if (!MainService2.isInnerNet1){//外网截掉协议前部
+                s=s.substring(4,s.length());
+            }
             byte[] a = Converts.HexString2Bytes(s);
             if(s.substring(10,12).equals("03")||s.substring(10,12).equals("04"))  //读寄存器数据
             {

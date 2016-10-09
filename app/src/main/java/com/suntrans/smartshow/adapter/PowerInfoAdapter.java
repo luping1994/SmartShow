@@ -92,7 +92,7 @@ public class PowerInfoAdapter extends RecyclerView.Adapter {
                 case 3:
                     image.setImageResource(R.mipmap.ic_pm);
                     name.setText("电流");
-                    value.setText(data.getIValue()+"I");
+                    value.setText(data.getIValue()+"A");
                     break;
                 case 4:
                     image.setImageResource(R.drawable.ic_power);

@@ -11,6 +11,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
@@ -46,6 +47,7 @@ public class Flashlight_Activity extends BaseActivity {
     private String lightAddress = "010108";
     private LoadingDialog dialog;
     private int which = 100;//1表示成功 100表示成功界面显示完毕
+    boolean isrun =true;
     @Override
     public int getLayoutId() {
         return R.layout.flashlight_activity;
@@ -76,30 +78,64 @@ public class Flashlight_Activity extends BaseActivity {
     @Override
     public void initData() {
         data= new FlashlightInfo();
+        data.setOpen(false);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         adapter = new FlashLightAdapter(this,data);
         recyclerView.setLayoutManager(manager);
         recyclerView.addItemDecoration(new RecyclerViewDivider(this, LinearLayoutManager.VERTICAL));  //设置分割线
         recyclerView.setAdapter(adapter);
         //读取数据
-        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        refreshLayout.post(new Runnable() {
             @Override
-            public void onRefresh() {
+            public void run() {
                 String s =lightAddress+"03 0200 000d";
                 s+=getCRC(s);
                 s= s.replace(" ","");
                 binder.sendOrder(s,5);
-
-                String s1 = lightAddress+"03 0300 0001";
-                s1+=getCRC(s1);
-                s1= s1.replace(" ","");
-                binder.sendOrder(s1,5);//读挡位信息
-
+                refreshLayout.setRefreshing(true);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        String s1 = lightAddress+"03 0300 0001";
+                        s1+=getCRC(s1);
+                        s1= s1.replace(" ","");
+                        binder.sendOrder(s1,5);//读挡位信息
+                        if (refreshLayout.isRefreshing()){
+                            refreshLayout.setRefreshing(false);
+                        }
+                    }
+                },4000);
+            }
+        });
+        refreshLayout.setColorSchemeColors(R.color.bg_action);
+        refreshLayout.setSize(SwipeRefreshLayout.LARGE);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Thread(){
+                    @Override
+                    public void run() {
+                        String s =lightAddress+"03 0200 000d";
+                        s+=getCRC(s);
+                        s= s.replace(" ","");
+                        binder.sendOrder(s,5);
+                        try {
+                            Thread.sleep(300);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        String s1 = lightAddress+"03 0300 0001";
+                        s1+=getCRC(s1);
+                        s1= s1.replace(" ","");
+                        binder.sendOrder(s1,5);//读挡位信息
+                    }
+                }.start();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         if (refreshLayout.isRefreshing()){
                             refreshLayout.setRefreshing(false);
+                            Toast.makeText(Flashlight_Activity.this,"连接失败,请重试",Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, 2000);
@@ -119,8 +155,8 @@ public class Flashlight_Activity extends BaseActivity {
 
             @Override
             public void upButtonClick() {
-                if (data.getGrade()!=null){
-                    String order = "01 01 08 06 0300 000"+(Integer.valueOf(data.getGrade())-1);
+                if (data.getGrade()!=null&&Integer.valueOf(data.getGrade())<7){
+                    String order = "01 01 08 06 0300 000"+(Integer.valueOf(data.getGrade())+1);
                     byte[] a = Converts.HexString2Bytes(order);
                     order=order+Converts.GetCRC(a,0,a.length);
                     binder.sendOrder(order,5);
@@ -129,8 +165,8 @@ public class Flashlight_Activity extends BaseActivity {
 
             @Override
             public void lowButtonClick() {
-                if (data.getGrade()!=null){
-                    String order = "01 01 08 06 0300 000"+(Integer.valueOf(data.getGrade())+1);
+                if (data.getGrade()!=null&&Integer.valueOf(data.getGrade())>0){
+                    String order = "01 01 08 06 0300 000"+(Integer.valueOf(data.getGrade())-1);
                     byte[] a = Converts.HexString2Bytes(order);
                     order=order+Converts.GetCRC(a,0,a.length);
                     binder.sendOrder(order,5);
@@ -141,7 +177,6 @@ public class Flashlight_Activity extends BaseActivity {
         ThreadManager.getInstance().createLongPool().execute(new Runnable() {
             @Override
             public void run() {
-                boolean isrun =true;
                 while (isrun){
                     if (binder!=null){
                         String s =lightAddress+"03 0200 000d";
@@ -154,13 +189,16 @@ public class Flashlight_Activity extends BaseActivity {
                             s1+=getCRC(s1);
                             s1= s1.replace(" ","");
                             binder.sendOrder(s1,5);//读挡位信息
-                            isrun=false;
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
+                    try {
+                        Thread.sleep(6000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-
             }
         });
     }
@@ -168,12 +206,12 @@ public class Flashlight_Activity extends BaseActivity {
     private String getCRC(String s) {
         s=s.replace(" ","");
         byte [] a = HexString2Bytes(s);
-
         return Converts.GetCRC(a,0,a.length);
     }
 
     @Override
     protected void onDestroy() {
+        isrun=false;
         super.onDestroy();
     }
 
@@ -238,7 +276,7 @@ public class Flashlight_Activity extends BaseActivity {
 
             }else if (s.substring(8,10).equals("02")){
                 //01 0108 0302 0006 ca560d0a
-                LogUtil.i("氙气灯数据：========>>>>fuck"+s);
+                LogUtil.i("氙气灯等级：========>>>>fuck"+s);
                 String grade = s.substring(13,14);
                 data.setGrade(grade);
             }
@@ -325,6 +363,7 @@ public class Flashlight_Activity extends BaseActivity {
                         public void run() {
                             dialog.dismiss();
                             which=100;
+                            adapter.notifyDataSetChanged();
                         }
                     }, 500);
                 }

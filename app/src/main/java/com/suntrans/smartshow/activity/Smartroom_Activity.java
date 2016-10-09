@@ -242,16 +242,20 @@ public class Smartroom_Activity extends AppCompatActivity {
             if (count>10){
                 if (MainService1.IsInnerNet){
                     if (content.substring(0,8).equals("f2fefe68")){
-                        powerInfoFragment.handler.sendMessage(msg);
+                        if (powerInfoFragment!=null)
+                            powerInfoFragment.handler.sendMessage(msg);
                     }
                     if (content.substring(0,4).equals("ab68")){
+                        if (roomConditionFragment!=null)
                         roomConditionFragment.handler1.sendMessage(msg);
                     }
                 }else {
                     if (content.substring(0,22).equals("020000ff00571f92fefe68")){
+                        if (powerInfoFragment!=null)
                         powerInfoFragment.handler.sendMessage(msg);
                     }
                     if (content.substring(0,8).equals("ab68ab68")){
+                        if (roomConditionFragment!=null)
                         roomConditionFragment.handler1.sendMessage(msg);
                     }
                 }

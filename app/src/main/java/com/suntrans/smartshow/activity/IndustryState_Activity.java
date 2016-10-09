@@ -67,11 +67,13 @@ public class IndustryState_Activity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             binder=(MainService1.ibinder)service;
+            String order = "FE 68 09 01 00 12 14 20 68 1F 00";
+            binder.sendOrder(order,8);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Toast.makeText(getApplication(), "网络错误！", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getApplication(), "网络错误！", Toast.LENGTH_SHORT).show();
 
         }
     };
@@ -146,14 +148,13 @@ public class IndustryState_Activity extends AppCompatActivity {
             public void run() {
                 refreshLayout.setRefreshing(true);
                     if (binder!=null){
-                        String order = "FE 68 09 01 00 12 14 20 68 1F 00";
-                        binder.sendOrder(order,8);
+//
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 if (refreshLayout.isRefreshing()){
                                     refreshLayout.setRefreshing(false);
-                                    UiUtils.showToast(UiUtils.getContext(),"失败了，请重试！");
+//                                    UiUtils.showToast(UiUtils.getContext(),"连接失败,请重试！");
                                 }
                             }
                         },2000);

@@ -38,6 +38,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -352,6 +353,8 @@ public class RoomConditionFragment extends BaseFragment {
                             public void run() {
                                 if (refreshLayout.isRefreshing())
                                     refreshLayout.setRefreshing(false);
+                                SimpleDateFormat sdf=new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
+                                date.put("time",sdf.format(new java.util.Date()));
                                 adapter.notifyDataSetChanged();
                             }
                         });
@@ -375,6 +378,9 @@ public class RoomConditionFragment extends BaseFragment {
                         map_state.put("progress_g", String.valueOf(progress_g));
                         map_state.put("progress_b", String.valueOf(progress_b));
                         System.out.println("红灯状态是" + state_r + "绿灯灯状态是" + state_b + "蓝灯状态是" + state_b + "进度条：" + progress_b + " " + progress_g + " " + progress_r);
+                        SimpleDateFormat sdf=new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
+                        date.put("time",sdf.format(new java.util.Date()));
+
                         UiUtils.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -463,6 +469,8 @@ public class RoomConditionFragment extends BaseFragment {
 
 
                     }
+                    SimpleDateFormat sdf=new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
+                    date.put("time",sdf.format(new java.util.Date()));
                     UiUtils.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -476,16 +484,19 @@ public class RoomConditionFragment extends BaseFragment {
         }
     };
 
-
+    private Map<String,String> date;
     @Override
     public void initViews() {
+        date =new HashMap<>();
+        date.put("time","null");
         data =  new SixSensor();
         initData();
         refreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.refreshlayout);
         recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);
         LinearLayoutManager manager = new LinearLayoutManager(getActivity());
-        adapter = new RoomConditionAdapter(getActivity(),data_air,data_room,data_posture,map_state);
+        adapter = new RoomConditionAdapter(getActivity(),data_air,data_room,data_posture,map_state,date);
         //给灯光控制模块设置点击监听
+
         adapter.setLightControlListener(new RoomConditionAdapter.onLightControlListener() {
             @Override
             public void onSwitchChange(Switch switchView, boolean isChecked) {
@@ -705,7 +716,7 @@ public class RoomConditionFragment extends BaseFragment {
                             if (refreshLayout.isRefreshing()){
                                 if (refreshLayout.isRefreshing()){
                                     refreshLayout.setRefreshing(false);
-                                    UiUtils.showToast(UiUtils.getContext(),"请求失败，请重试！");
+//                                    UiUtils.showToast(UiUtils.getContext(),"请求失败，请重试！");
                                 }
                             }
                         }

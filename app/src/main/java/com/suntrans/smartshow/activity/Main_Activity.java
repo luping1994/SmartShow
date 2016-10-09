@@ -1,18 +1,11 @@
 package com.suntrans.smartshow.activity;
 
-import android.app.Application;
-import android.app.Dialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -25,27 +18,18 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.base.BaseActivity;
-import com.suntrans.smartshow.base.BaseActivity1;
 import com.suntrans.smartshow.base.BaseApplication;
-import com.suntrans.smartshow.utils.RxBus;
 import com.suntrans.smartshow.utils.StatusBarCompat;
-import com.suntrans.smartshow.utils.SystemBarTintManager;
 import com.suntrans.smartshow.views.MySlidingMenu;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.suntrans.smartshow.R.drawable.control;
 
 
 /**
@@ -65,7 +49,6 @@ public class Main_Activity extends AppCompatActivity {
     private TextView tv_title;
     boolean i =true;
     private TextView mode;//内外网模式显示
-    private  SystemBarTintManager tintManager;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -264,6 +247,7 @@ public class Main_Activity extends AppCompatActivity {
                                 }
                                 case 1:{
                                     startActivity(new Intent(Main_Activity.this,OnlineDevices_Activity.class));
+                                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                                     break;
                                 }
                                 case 2:{

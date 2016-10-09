@@ -32,7 +32,7 @@ public class PowerInfoFragment extends BaseFragment {
     private SwipeRefreshLayout refreshLayout;   //下拉刷新控件
     private RecyclerView recyclerView;   //列表控件
     private PowerInfoAdapter adapter;
-    private String date = "null";//刷新的时间
+    private String date = " ";//刷新的时间
 
     public Handler handler = new Handler(){
         @Override
@@ -123,22 +123,22 @@ public class PowerInfoFragment extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
-        refreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                refreshLayout.setRefreshing(true);
-                ((Smartroom_Activity)getActivity()).binder.sendOrder(order,9);
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (refreshLayout.isRefreshing()){
-                            refreshLayout.setRefreshing(false);
-//                            UiUtils.showToast(getActivity(),"连接服务器失败,请稍后再试");
-                        }
-                    }
-                }, 2000);
-            }
-        });
+//        refreshLayout.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                refreshLayout.setRefreshing(true);
+//                ((Smartroom_Activity)getActivity()).binder.sendOrder(order,9);
+//                handler.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        if (refreshLayout.isRefreshing()){
+//                            refreshLayout.setRefreshing(false);
+//                            UiUtils.showToast(getActivity(),"连接失败,请稍后再试");
+//                        }
+//                    }
+//                }, 2000);
+//            }
+//        });
     }
 
     @Override

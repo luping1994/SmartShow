@@ -8,7 +8,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.activity.SmartRoomDetails_Activity;
+import com.suntrans.smartshow.activity.SwitchControl_Activity;
 import com.suntrans.smartshow.adapter.SmartControlAdapter;
 import com.suntrans.smartshow.base.BaseFragment;
 import com.suntrans.smartshow.bean.SmartSwitch;
@@ -71,7 +71,7 @@ public class SmartControlFragment extends BaseFragment {
                         intent.putExtra("area",8);
                         break;
                 }
-                intent.setClass(getActivity(), SmartRoomDetails_Activity.class);
+                intent.setClass(getActivity(), SwitchControl_Activity.class);
                 startActivity(intent);   //跳转到单相表详细信息页面
                 getActivity().overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }

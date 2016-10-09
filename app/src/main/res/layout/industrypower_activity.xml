@@ -72,8 +72,6 @@
             <Button
                 android:textColor="@color/white"
                 android:textSize="17sp"
-                android:elevation="3dp"
-                android:padding="16dp"
                 android:background="@drawable/bg_bt"
                 android:id="@+id/ll_con"
                 android:orientation="vertical"
@@ -88,7 +86,6 @@
             android:layout_height="5dp"
             android:background="@color/bg_color"/>
         <Button
-            android:elevation="3dp"
             android:background="@drawable/bg_bt"
             android:id="@+id/ll_state"
             android:orientation="vertical"

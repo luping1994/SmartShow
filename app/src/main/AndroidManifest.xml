@@ -14,11 +14,7 @@
         android:theme="@style/MyAppTheme"
         android:name=".base.BaseApplication">
         <activity android:name=".activity.Main_Activity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <!--四个表的activity-->
         <activity android:name=".activity.Fourmeters_Activity"/>
@@ -36,11 +32,17 @@
         <activity android:name=".activity.IndustryState_Activity"/>
         <activity android:name=".activity.RoadBulb_Activity"/>
         <activity android:name=".activity.Flashlight_Activity"/>
-        <activity android:name=".activity.SmartRoomDetails_Activity"/>
+        <activity android:name=".activity.SwitchControl_Activity"/>
         <activity android:name=".activity.OnlineDevices_Activity"/>
         <activity android:name=".activity.Setting_Activity"/>
         <activity android:name=".activity.WarningConfig_Activity"/>
         <activity android:name=".activity.Setting_voice_Activity"/>
+        <activity android:name=".activity.Welcome_Activity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -25,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
@@ -141,10 +142,8 @@ public class RoadBulb_Activity extends AppCompatActivity{
         recyclerView.setLayoutManager(manager);
 
 
-        refreshLayout.setColorSchemeResources(android.R.color.holo_green_light,
-                android.R.color.holo_orange_light,
-                android.R.color.holo_red_light,
-                android.R.color.holo_blue_light);
+        refreshLayout.setColorSchemeResources(R.color.bg_action);
+        refreshLayout.setSize(SwipeRefreshLayout.LARGE);
         refreshLayout.post(new Runnable() {
             @Override
             public void run() {
@@ -174,6 +173,7 @@ public class RoadBulb_Activity extends AppCompatActivity{
                         if (refreshLayout.isRefreshing()){
                             refreshLayout.setRefreshing(false);
                         }
+                        Toast.makeText(RoadBulb_Activity.this,"连接失败",Toast.LENGTH_SHORT).show();
                     }
                 }, 2000);
             }

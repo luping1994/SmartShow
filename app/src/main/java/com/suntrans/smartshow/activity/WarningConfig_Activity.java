@@ -137,6 +137,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
     }
 
     private void initViews() {
+        dialog = new LoadingDialog(this);
         Intent intent1 = new Intent(getApplicationContext(), MainService2.class);    //指定要绑定的service
         bindService(intent1, con, Context.BIND_AUTO_CREATE);   //绑定主service
         // 注册自定义动态广播消息。根据Action识别广播
@@ -222,17 +223,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog1.setTipTextView("正在恢复默认设置..");
-                dialog1.show();
-                handler2.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (dialog1.isShowing()){
-                            dialog1.setTipTextView("设置失败");
-                            dialog1.dismiss();
-                        }
-                    }
-                },2000);
+                showFailedDialog();
                 binder.sendOrder("ab68" + addr + "f010 0700 0005 0a 0232 0208 0214 0207 0205", 4);
             }
         });
@@ -357,9 +348,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
                                             order_value+=values[j];
                                         }
                                         String order = "ab68" + addr + "f010 0700 0005 0a"+order_value;
-                                        which = "2";   //wich=2，代表更改单个报警阈值
-                                        dialog1.setTipTextView("修改中..");
-                                        dialog1.show();
+                                        showFailedDialog();
                                         binder.sendOrder(order,4);
                                     }
                                     else
@@ -382,22 +371,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
                 aSwitch.setOnChangeListener(new Switch.OnSwitchChangedListener() {
                     @Override
                     public void onSwitchChange(Switch switchView, boolean isChecked) {
-                        dialog1.show();
-                        dialog1.setTipTextView("执行中...");
-                        handler2.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (dialog1.isShowing()){
-                                    dialog1.setTipTextView("执行失败");
-                                    handler2.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            dialog1.dismiss();
-                                        }
-                                    }, 300);
-                                }
-                            }
-                        },3000);
+                        showFailedDialog();
                         //因为0304寄存器存放的是语音、温度、烟雾、甲醛、PM2.5、振动的开关状态，所以值要把六个开关的状态都写进去
                         byte byt= (byte) ((voice_state.equals("1")?1:0)*32);   //语音开关状态
                         for(int i=0;i<=4;i++)
@@ -457,16 +431,8 @@ public class WarningConfig_Activity extends AppCompatActivity {
                     datas.get(4).put("State", switch_shake);
 //                    if(!which.equals(WRITE_STATE))   //如果正在更改状态，则先不更新页面
                     if (adapter != null) {
+                       showSuccessDialog();
                         adapter.notifyDataSetChanged();
-                        if (dialog1.isShowing()){
-                            dialog1.setTipTextView("成功");
-                            handler2.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dialog1.dismiss();
-                                }
-                            },500);
-                        }
                     } else {
                         adapter = new MyAdapter();
                         recyclerView.setAdapter(adapter);
@@ -488,16 +454,8 @@ public class WarningConfig_Activity extends AppCompatActivity {
                     datas.get(3).put("State", switch_pm25);
                     datas.get(4).put("State", switch_shake);
                     if (adapter != null) {
+                       showSuccessDialog();
                         adapter.notifyDataSetChanged();
-                        if (dialog1.isShowing()){
-                            dialog1.setTipTextView("成功");
-                            handler2.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dialog1.dismiss();
-                                }
-                            },500);
-                        }
                     } else {
                         adapter = new MyAdapter();
                         recyclerView.setAdapter(adapter);
@@ -519,15 +477,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
                     datas.get(3).put("Value", String.valueOf(pm25));
                     datas.get(4).put("Value", String.valueOf(shake));
                     if (adapter != null) {
-                        if (dialog1.isShowing()){
-                            dialog1.setTipTextView("成功");
-                            handler2.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    dialog1.dismiss();
-                                }
-                            },500);
-                        }
+                       showSuccessDialog();
                         adapter.notifyDataSetChanged();
                     } else {
                         adapter = new MyAdapter();
@@ -559,15 +509,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
                     datas.get(3).put("State", switch_pm25);
                     datas.get(4).put("State", switch_shake);
                     if (adapter != null) {
-                        if (dialog1.isShowing()){
-                            dialog1.setTipTextView("成功!");
-                            handler2.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                   dialog1.dismiss();
-                                }
-                            },500);
-                        }
+                       showSuccessDialog();
                         adapter.notifyDataSetChanged();
                     } else {
                         adapter = new MyAdapter();
@@ -578,12 +520,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
                     }
                 } else if (s.substring(12, 15).equals("070") && a.length > 9)      //修改某个报警阈值
                 {
-                    if (which.equals(WRITE_VALUE)) {
-                        which = "100";
-                        Message msg1 = new Message();
-                        msg1.what = 0;   //关闭dialogprogress
-                        handler2.sendMessage(msg1);
-                    }
+                    showSuccessDialog();
                     int item = Integer.valueOf(s.substring(15, 16));   //判断是哪个参数，0代表振动，4代表温度。中间依次是烟雾、甲醛、PM2.5
                     datas.get(item).put("Value", String.valueOf((a[8] == 2 ? 1 : -1) * (a[9] & 0xff)));
                     if (adapter != null) {
@@ -627,54 +564,7 @@ public class WarningConfig_Activity extends AppCompatActivity {
             }
         }
     };
-    private Handler handler2 = new Handler(){
-        public void handleMessage(Message msg)
-        {
-            super.handleMessage(msg);
-            if(msg.what==0)   //如果是要关闭progresedialog的显示（收到相应通道的反馈，则进行此操作）
-            {
-                if(progressdialog!= null)
-                {
-                    progressdialog.dismiss();
-                    progressdialog=null;
-                }
-                //which="100";
-            }
-            else if(msg.what==1)   //是要显示progressdialog
-            {
-                progressdialog = new ProgressDialog(WarningConfig_Activity.this);    //初始化progressdialog
-                progressdialog.setCancelable(true);// 设置是否可以通过点击Back键取消
-                progressdialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条
-                progressdialog.show();
-                progressdialog.setContentView(R.layout.progressdialog);    //设置显示的内容
-            }
-            else if(msg.what==2)   //如果是要根据时间判断是否关闭progressdialog的显示，用于通讯条件不好，收不到反馈时
-            {
-                if(new Date().getTime()-time>=1900)
-                {
-                    if(progressdialog!= null)
-                    {
-                        progressdialog.dismiss();
-                        progressdialog=null;
-                    }
-                    if(!which.equals("100"))
-                    {
-                        which="100";
-                        adapter.notifyDataSetChanged();
-                        //    Toast.makeText(WarningConfig_Activity.this, "网络错误！", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-            else   //如果是要显示progressdialog
-            {
-                progressdialog = new ProgressDialog(WarningConfig_Activity.this);    //初始化progressdialog
-                progressdialog.setCancelable(true);// 设置是否可以通过点击Back键取消
-                progressdialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条
-                progressdialog.show();
-                progressdialog.setContentView(R.layout.progressdialog);    //设置显示的内容
-            }
-        }
-    };
+    private Handler handler2 = new Handler();
 
 
     //新建刷新线程，刷新当前页面显示数据
@@ -693,5 +583,44 @@ public class WarningConfig_Activity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+
+    private LoadingDialog dialog;
+    private int which1 = 100;//1表示成功 100表示成功界面显示完毕
+    // 显示成功发送命令时候的dialog
+    private void showSuccessDialog() {
+        which1=1;
+        dialog.setTipTextView("成功");
+        handler2.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (dialog.isShowing())
+                    dialog.dismiss();
+                which1=100;
+            }
+        }, 500);
+    }
+
+    // 显示点击按钮发送命令时候的dialog，2s后无回应则认为执行失败
+    private void showFailedDialog() {
+        dialog.show();
+        dialog.setTipTextView("执行中...");
+        handler2.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (which1==100){
+                    dialog.setTipTextView("执行失败");
+                    handler2.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            dialog.dismiss();
+                            which1=100;
+                            adapter.notifyDataSetChanged();
+                        }
+                    }, 500);
+                }
+            }
+        }, 2000);
     }
 }

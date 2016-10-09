@@ -13,7 +13,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -32,7 +31,6 @@ import android.widget.Toast;
 
 import com.suntrans.smartshow.Convert.Converts;
 import com.suntrans.smartshow.R;
-import com.suntrans.smartshow.service.MainService1;
 import com.suntrans.smartshow.service.MainService2;
 import com.suntrans.smartshow.utils.LogUtil;
 import com.suntrans.smartshow.utils.StatusBarCompat;
@@ -41,19 +39,18 @@ import com.suntrans.smartshow.utils.UiUtils;
 import com.suntrans.smartshow.views.LoadingDialog;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static android.media.CamcorderProfile.get;
-import static com.suntrans.smartshow.R.layout.smartroom_detail_activity;
 
 
 /**
  * Created by pc on 2016/9/15.
  * 智能家居开关控制页面
  */
-public class SmartRoomDetails_Activity extends AppCompatActivity {
+public class SwitchControl_Activity extends AppCompatActivity {
+    private String oldRessult = "";
     private Toolbar toolbar;
     private TextView tv_title;
     private RecyclerView recyclerView;
@@ -79,6 +76,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             LogUtil.i("绑定成功");
             binder=(MainService2.ibinder)service;   //activity与service通讯的类，调用对象中的方法可以实现通讯
             Log.v("Time", "绑定后时间：" + String.valueOf(System.currentTimeMillis()));
+            getSwitchStateFromServer();
         }
 
         @Override   //service因异常而断开的时候调用此方法
@@ -346,14 +344,15 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             @Override
             public void run() {
                 refreshLayout.setRefreshing(true);
-                if (binder!=null){
-                    getSwitchStateFromServer();
-                }
+//                if (binder!=null){
+//                    getSwitchStateFromServer();
+//                }
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         if (refreshLayout.isRefreshing()){
                             refreshLayout.setRefreshing(false);
+//                            Toast.makeText(SwitchControl_Activity.this,"连接失败",Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, 2000);
@@ -368,7 +367,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     public void run() {
                         if (refreshLayout.isRefreshing()){
                             refreshLayout.setRefreshing(false);
-                            UiUtils.showToast(UiUtils.getContext(),"请求服务器失败，请稍后再试");
+                            UiUtils.showToast(UiUtils.getContext(),"连接失败");
                         }
                     }
                 }, 2000);
@@ -381,7 +380,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
                     if (binder!=null){
                         getSwitchStateFromServer();
                         try {
-                            Thread.sleep(3000);
+                            Thread.sleep(10000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -434,8 +433,8 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-            RecyclerView.ViewHolder holder = new SmartRoomDetails_Activity.mAdapter.viewHolder1(LayoutInflater.from(
-                    SmartRoomDetails_Activity.this).inflate(R.layout.road_bulb_item, parent, false));
+            RecyclerView.ViewHolder holder = new SwitchControl_Activity.mAdapter.viewHolder1(LayoutInflater.from(
+                    SwitchControl_Activity.this).inflate(R.layout.road_bulb_item, parent, false));
             return holder;
         }
 //        private int[] ketingBitmapId_off={R.drawable.ic_chazuo_off,R.drawable.ic_tv1_off,R.drawable.ic_bulb_off,R.drawable.ic_wall_off};
@@ -452,8 +451,8 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             String name = data.get(position).get("name");
             int id = Integer.valueOf(data.get(position).get("Image"));
             int idDot = Integer.valueOf(data.get(position).get("dot"));
-            Bitmap bitmap = BitmapFactory.decodeResource(SmartRoomDetails_Activity.this.getResources(), id);
-            Bitmap bitmapDot = BitmapFactory.decodeResource(SmartRoomDetails_Activity.this.getResources(), idDot);
+            Bitmap bitmap = BitmapFactory.decodeResource(SwitchControl_Activity.this.getResources(), id);
+            Bitmap bitmapDot = BitmapFactory.decodeResource(SwitchControl_Activity.this.getResources(), idDot);
 
             bitmap = Converts.toRoundCorner(bitmap, UiUtils.dip2px(20));
             ((viewHolder1) holder).image.setImageBitmap(bitmap);
@@ -574,16 +573,20 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             s = s.split("0d0a")[0] + "0d0a";
             s=s.toLowerCase();
             if (MainService2.isInnerNet1){
-//                if (!s.substring(0,8).equals("aa690001"))
-//                    return;
+                if (!s.substring(0,8).equals("aa690001"))
+                    return;
             }else {
-//                if (!s.substring(0,12).equals("ab68aa690001"))
-//                    return;
+                if (!s.substring(0,12).equals("ab68aa690001"))
+                    return;
                 s=s.substring(4,s.length());
             }
+//            if (oldRessult.equals(s)){
+//                return;
+//            }else {
+//                oldRessult = s;
+//            }
             if (s.length() > 20) {
                 return_addr = s.substring(4, 12);   //返回数据的开关地址
-                System.out.println("Fuck！！！！！！！！！！！返回的命令为s=:" + s);
                 byte a[] = Converts.HexString2Bytes(s);
                 if (s.substring(12, 14).equals("03"))   //如果是读寄存器状态，解析出开关状态
                 {
@@ -1032,7 +1035,7 @@ public class SmartRoomDetails_Activity extends AppCompatActivity {
             @Override
             public void run() {
                 if (which==100){
-                    dialog.setTipTextView("执行失败");
+//                    dialog.setTipTextView("执行失败");
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {

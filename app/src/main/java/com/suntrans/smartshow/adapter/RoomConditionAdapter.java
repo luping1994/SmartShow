@@ -17,6 +17,7 @@ import com.suntrans.smartshow.R;
 import com.suntrans.smartshow.bean.SixSensor;
 import com.suntrans.smartshow.views.Switch;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -30,19 +31,19 @@ import static com.suntrans.smartshow.R.id.layout_arrow;
 public class RoomConditionAdapter extends RecyclerView.Adapter {
     private final Map<String, String> map;
     private Context context;
-    private SixSensor data;
     private int Pwidth=0;  //屏幕宽度，单位是pixel
     private DisplayMetrics displayMetrics = new DisplayMetrics();
     private ArrayList<Map<String, String>> data_air;
     private ArrayList<Map<String, String>> data_room;
     private ArrayList<Map<String, String>> data_posture;
-
-    public RoomConditionAdapter(Activity context, ArrayList<Map<String, String>> air,ArrayList<Map<String, String>> room ,ArrayList<Map<String, String>> posture,Map<String,String> map) {
+    private Map date;
+    public RoomConditionAdapter(Activity context, ArrayList<Map<String, String>> air,ArrayList<Map<String, String>> room ,ArrayList<Map<String, String>> posture,Map<String,String> map,Map date) {
         this.context = context;
         this.data_air = air;
         this.data_room =room;
         this.data_posture = posture;
         this.map=map;
+        this.date = date;
         context.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);//获取屏幕大小的信息
         Pwidth=displayMetrics.widthPixels;   //屏幕宽度,先锋的宽度是800px，小米2a的宽度是720px
     }
@@ -71,7 +72,7 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder (RecyclerView.ViewHolder holder,int position){
         if (holder instanceof viewHolder2){
-            ((viewHolder2)holder).value.setText("2016/9/26");
+            ((viewHolder2)holder).setData();
         }else if(holder instanceof viewHolder1) {
             ((viewHolder1)holder).setData(position);
         }else if (holder instanceof  viewHolder3){
@@ -283,6 +284,10 @@ public class RoomConditionAdapter extends RecyclerView.Adapter {
             super(view);
             layout=(LinearLayout)view.findViewById(R.id.layout);
             value = (TextView) view.findViewById(R.id.value);
+        }
+        public void setData(){
+
+            value.setText(date.get("time")+"");
         }
     }
 
