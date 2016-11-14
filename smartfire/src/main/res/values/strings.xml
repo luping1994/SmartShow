@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">三川智控消防</string>
+    <string name="title">三川消防</string>
+    <string name="back">返回</string>
+    <string name="alertTitle">报警记录</string>
+    <string name="deleteRecord">清除记录</string>
+</resources>

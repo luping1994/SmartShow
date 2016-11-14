@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/bg_action"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical" >
+<android.support.v7.widget.Toolbar
+    android:id="@+id/toolbar"
+    android:fitsSystemWindows="true"
+    android:background="@color/colorPrimary"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="我的"
+        android:textSize="18sp"
+        android:textColor="@color/white"/>
+</android.support.v7.widget.Toolbar>
+<RelativeLayout
+    android:background="@color/bg_color"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <SurfaceView
+        android:id="@+id/realplay_sv"
+        android:layout_width="600dp"
+        android:layout_height="200dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerInParent="false"
+        android:background="@android:color/transparent" />
+    <include layout="@layout/realplay_loading_layout" />
+</RelativeLayout>
+    <LinearLayout
+        android:background="@color/bg_color"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <include layout="@layout/ez_play_control" />
+    </LinearLayout>
+
+</LinearLayout>

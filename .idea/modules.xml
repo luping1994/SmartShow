@@ -3,7 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/SmartShow.iml" filepath="$PROJECT_DIR$/SmartShow.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/smartfire/smartfire.iml" filepath="$PROJECT_DIR$/smartfire/smartfire.iml" />
+      <module fileurl="file://$PROJECT_DIR$/zhanbanshow/zhanbanshow.iml" filepath="$PROJECT_DIR$/zhanbanshow/zhanbanshow.iml" />
     </modules>
   </component>
 </project>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+	android:fitsSystemWindows="true"
+	android:clipToPadding="true"
+    android:background="@color/bg_action" >
+     <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="2"
+        android:gravity="center"
+        android:layout_marginTop="20dip"
+        android:layout_marginBottom="20dip"
+        android:orientation="vertical">
+	    <TextView
+	        android:id="@+id/tx_title"
+	        android:layout_width="fill_parent"
+	        android:layout_height="50dip"
+	        android:gravity="center"
+	        android:textSize="32sp"
+	        android:text="三 川 智 能 演 示"
+	        android:textColor="@color/white"   
+	        android:background="@color/bg_action"    
+	        />
+     </LinearLayout>
+     <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="3"
+        android:gravity="bottom|center"
+        android:layout_marginTop="20dip"
+        android:layout_marginBottom="30dip"
+        android:orientation="vertical">
+
+		 <TextView
+			 android:id="@+id/center_text"
+			 android:visibility="invisible"
+			 android:layout_marginBottom="150dp"
+			 android:textColor="@color/white"
+			 android:text="sbbbbbbbbbbb"
+			 android:gravity="center"
+			 android:layout_width="match_parent"
+			 android:layout_height="wrap_content" />
+	    <ImageView
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:scaleType="centerInside"        
+		        android:src="@drawable/logo_suntrans"/>
+	      <TextView
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:gravity="center"
+	        android:layout_marginBottom="20dip"
+	        android:layout_marginTop="10dip"
+	        android:textSize="18sp"
+	        android:textColor="@color/white"
+	        android:text="广州三川控制系统工程设备有限公司"/>
+ 	</LinearLayout>  
+</LinearLayout>

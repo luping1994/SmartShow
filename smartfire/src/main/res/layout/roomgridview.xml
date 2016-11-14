@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="85dip"
+    android:layout_height="120dip"
+    android:orientation="vertical" 
+    android:gravity="center"
+	android:layout_marginTop="5dip"
+	android:id="@+id/layout"
+    >
+    <LinearLayout 
+	    android:layout_width="85dip"
+	    android:layout_height="85dip"
+	    android:orientation="vertical" 
+	    android:gravity="bottom|left"
+	    android:id="@+id/layout1"
+    >
+	   <ImageView
+		   android:id="@+id/image"
+		   android:layout_width="70dip"
+		   android:layout_height="70dip"
+		   android:scaleType="centerCrop"
+		   android:src="@drawable/ic_launcher"
+		   />
+   </LinearLayout>
+   <TextView
+       android:id="@+id/name"
+       android:layout_width="fill_parent"
+       android:layout_height="35dip"
+       android:gravity="center"
+       android:textColor="@color/black"
+	   android:textSize="14sp"
+	   android:maxLines="2"
+	   android:ellipsize="end"
+       android:text="客厅-插座"
+       />
+
+</LinearLayout>

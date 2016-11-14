@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="120dip"
+    android:orientation="vertical"
+    android:gravity="center"
+	android:layout_marginLeft="25dip"
+	android:layout_marginRight="25dip"
+	android:background="@color/white"
+    >
+
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="0dip"
+		android:layout_weight="1" />
+    <ProgressBar 
+        android:id="@+id/loading__progressBar"
+    	android:layout_width="50dip"
+   	    android:layout_height="50dip"
+ 	    android:indeterminate="false"
+  	    android:indeterminateDrawable="@anim/loading"/>
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="50dip"
+		android:textColor="@color/gray"
+		android:textSize="16sp"
+		android:gravity="center"
+		android:id="@+id/tx_loading"
+		android:layout_gravity="center"
+		android:text="正在加载。。。"/>
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="0dip"
+		android:layout_weight="1" />
+	
+</LinearLayout>
